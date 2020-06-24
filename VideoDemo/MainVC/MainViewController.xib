@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="15705" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15706"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="MainViewController">
+            <connections>
+                <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT">
+            <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7y7-Ot-8ei">
+                    <rect key="frame" x="30" y="94" width="62" height="30"/>
+                    <state key="normal" title="开始直播"/>
+                    <connections>
+                        <action selector="startLiving:" destination="-1" eventType="touchUpInside" id="uhb-hn-Cvz"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cQ6-rd-rJ9">
+                    <rect key="frame" x="30" y="154" width="92" height="30"/>
+                    <state key="normal" title="开始采集编码"/>
+                    <connections>
+                        <action selector="startEncoder:" destination="-1" eventType="touchUpInside" id="z9q-ny-P5a"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fkE-DC-U9C">
+                    <rect key="frame" x="30" y="215" width="123" height="30"/>
+                    <state key="normal" title="开始音频采集编码"/>
+                    <connections>
+                        <action selector="startAudioEncoder:" destination="-1" eventType="touchUpInside" id="BmH-s6-Vbk"/>
+                    </connections>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="7y7-Ot-8ei" firstAttribute="top" secondItem="Q5M-cg-NOt" secondAttribute="top" constant="50" id="E1o-au-tBe"/>
+                <constraint firstItem="cQ6-rd-rJ9" firstAttribute="top" secondItem="7y7-Ot-8ei" secondAttribute="bottom" constant="30" id="G6e-au-oaQ"/>
+                <constraint firstItem="fkE-DC-U9C" firstAttribute="top" secondItem="cQ6-rd-rJ9" secondAttribute="bottom" constant="31" id="KnE-Cg-U1w"/>
+                <constraint firstItem="cQ6-rd-rJ9" firstAttribute="leading" secondItem="7y7-Ot-8ei" secondAttribute="leading" id="Lyh-nq-Ym8"/>
+                <constraint firstItem="7y7-Ot-8ei" firstAttribute="leading" secondItem="Q5M-cg-NOt" secondAttribute="leading" constant="30" id="ScX-ep-SFw"/>
+                <constraint firstItem="fkE-DC-U9C" firstAttribute="leading" secondItem="cQ6-rd-rJ9" secondAttribute="leading" id="Xvh-kc-mti"/>
+            </constraints>
+            <viewLayoutGuide key="safeArea" id="Q5M-cg-NOt"/>
+            <point key="canvasLocation" x="-330" y="133"/>
+        </view>
+    </objects>
+</document>
