@@ -11,9 +11,14 @@
 #import "AudioCapture.h"
 #import "LRVideoH264HDEncoder.h"
 #import "LRAudioAACHDEncoder.h"
+#include "LRVideoAudioMuxer.hpp"
+#include "LRVideoAudioMuxHander.hpp"
 
-@interface HardwareDeviceScheduler ()<VideoCameraCaptureDelegate,AudioCaptureDelegate>
-
+@interface HardwareDeviceScheduler ()<VideoCameraCaptureDelegate,AudioCaptureDelegate,VideoEncoderDelegate,AudioEncoderDelegate>
+{
+    LRVideoAudioMuxer       mediaMuxHander;
+//    LRVideoAudioMuxHander   mediaMuxHander;
+}
 /** videoCapture */
 @property (nonatomic,strong) LRAVVideoCamera *videoCapture;
 /** audioCapture */
@@ -24,6 +29,8 @@
 @property (nonatomic,strong) LRAudioAACHDEncoder *audioEncoder;
 /** encoderQueue */
 @property (nonatomic,strong) dispatch_queue_t encoderQueue;
+/** isSuccess */
+@property (nonatomic,assign) BOOL isSuccess;
 
 @end
 
@@ -36,10 +43,27 @@
         self.audioCapture = [[AudioCapture alloc] initWithAudioConfig:config];
         self.videoEncoder = [[LRVideoH264HDEncoder alloc] initWithVideoEncoderConfig:config];
         self.audioEncoder = [[LRAudioAACHDEncoder alloc] initWithAudioEncoderConfig:config];
-        self.videoCapture.cameraDelegate = self;
-        self.audioCapture.captureDelegate = self;
+        self.videoCapture.cameraDelegate    = self;
+        self.audioCapture.captureDelegate   = self;
+        self.videoEncoder.videoDelegate     = self;
+        self.audioEncoder.audioDelegate     = self;
+        self.isSuccess    = mediaMuxHander.prepareForMux([config.muxFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
+        if (!self.isSuccess) {
+            NSLog(@"混流器创建失败");
+        }
     }
     return self;
+}
+
+- (void)dealloc {
+    NSLog(@"DEALLOC %@",NSStringFromClass(self.class));
+    self.videoCapture.cameraDelegate    = nil;
+    self.audioCapture.captureDelegate   = nil;
+    self.videoEncoder.videoDelegate     = nil;
+    self.audioEncoder.audioDelegate     = nil;
+    if (self.isSuccess) {
+        mediaMuxHander.freeMuxHander();
+    }
 }
 
 - (AVCaptureVideoPreviewLayer *)renderLayer {
@@ -47,11 +71,17 @@
 }
 
 - (void)startCapture {
+    if (!self.isSuccess) {
+        return;
+    }
     [self.videoCapture startCapture];
     [self.audioCapture startCapture];
 }
 
 - (void)stopCapture {
+    if (!self.isSuccess) {
+        return;
+    }
     [self.videoCapture stopCapture];
     [self.audioCapture stopCapture];
 }
@@ -76,6 +106,22 @@
     dispatch_sync(self.encoderQueue, ^{
         [self.audioEncoder AACAudioEncoderWithBytes:audioData dataLength:length];
     });
+}
+
+#pragma mark - VideoEncoderDelegate
+- (void)videoEncodecData:(AVPacket *)videoPacket withVideoStream:(AVStream *)videoStream {
+    if (!self.isSuccess) {
+        return;
+    }
+    mediaMuxHander.addVideoData(videoPacket, videoStream);
+}
+
+#pragma mark - AudioEncoderDelegate
+ - (void)audioEncodecData:(AVPacket *)audioPacket withAudioStream:(AVStream *)audioStream {
+    if (!self.isSuccess) {
+        return;
+    }
+     mediaMuxHander.addAudioData(audioPacket, audioStream);
 }
 
 @end

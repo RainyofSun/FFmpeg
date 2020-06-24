@@ -8,6 +8,7 @@
 
 #import "EncoderViewController.h"
 #import "HardwareDeviceScheduler.h"
+#include "Mp4Synthesis.h"
 
 @interface EncoderViewController ()
 
@@ -22,12 +23,13 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     self.title = @"开始采集编码";
-    [self nativeMethods];
+//    [self nativeMethods];
+    [self muxTest];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
-    [self.captureSchedular stopCapture];
+//    [self.captureSchedular stopCapture];
 }
 
 - (void)nativeMethods {
@@ -47,6 +49,8 @@
     config.framesPerPacket = 1;
     config.audioBitRate = 320000;
     config.audioFilePath = @"vocal.aac";
+    // 混流
+    config.muxFilePath = @"mux.mp4";
     
     self.captureSchedular = [[HardwareDeviceScheduler alloc] initWithHardwareDeviceConfig:config];
     AVCaptureVideoPreviewLayer *previewLayer = [self.captureSchedular renderLayer];
@@ -55,6 +59,19 @@
     });
     [self.view.layer addSublayer:previewLayer];
     [self.captureSchedular startCapture];
+}
+
+- (void)muxTest {
+    LRImageCameraConfig *config = [[LRImageCameraConfig alloc] init];
+    config.videoFilePath = @"h264test.264";
+    config.audioFilePath = @"free_aduio.aac";
+    config.muxFilePath   = @"mux.mp4";
+    
+    NSString *h263FilePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"h264test.264"];
+    NSString *aacFilePath  = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"free_aduio.aac"];
+    Mp4Synthesis *mp4Synthesis = new Mp4Synthesis;
+    mp4Synthesis->muxer_main([h263FilePath cStringUsingEncoding:NSUTF8StringEncoding], [aacFilePath cStringUsingEncoding:NSUTF8StringEncoding], [config.muxFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
+    delete mp4Synthesis;
 }
 
 /*

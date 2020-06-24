@@ -166,7 +166,7 @@ int LRVideoAudioMuxHander::configureFFmpegWithFormat() {
         ret = avformat_write_header(this->m_outputContext, NULL);
         if (ret < 0) {
             this->writeHeaderSeccess = false;
-            printf("文件头写入失败");
+            printf("文件头写入失败 %s\n",av_err2str(ret));
             return ret;
         }
     }

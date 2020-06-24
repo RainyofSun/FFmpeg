@@ -51,7 +51,7 @@ public:
     /**
      * 开始编码
      */
-    void encode(I420Buffer buffer,void *(*VideoEncodeCallBack)(AVPacket *video_packet));
+    void encode(I420Buffer buffer,void *(*VideoEncodeCallBack)(AVPacket *video_packet,AVStream *video_stream));
     
     /**
      * 销毁编码器

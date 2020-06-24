@@ -7,9 +7,11 @@
 //
 
 #import "LRVideoH264HDEncoder.h"
-#import "VideoH264HDEncoder.hpp"
+#include "VideoH264HDEncoder.hpp"
 #include "NV12ToYUV420P.hpp"
 #include "AudioAACEncoder.hpp"
+
+static LRVideoH264HDEncoder *encoder = nil;
 
 @implementation LRVideoH264HDEncoder
 {
@@ -20,6 +22,7 @@
 
 - (instancetype)initWithVideoEncoderConfig:(LRImageCameraConfig *)config {
     if (self = [super init]) {
+        encoder = self;
         isSucess = videoEncoder.initX264Encoder(config.videoWidth, config.videoHeight, config.videoBitRate, config.frameRate,[config.videoFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
         if (!isSucess) {
             NSLog(@"创建Video编码器失败");
@@ -72,9 +75,16 @@
     CFRelease(blockBuffer);
 }
 
-void * VideoEncdeorCallBack(AVPacket *video_packet) {
-    
-//    NSLog(@"成功的回调了我");
+#pragma mark - private methods
+- (void)videoCodec:(AVPacket *)videoPacket withVideoStream:(AVStream *)videoStream {
+    if (self.videoDelegate != nil && [self.videoDelegate respondsToSelector:@selector(videoEncodecData:withVideoStream:)]) {
+        [self.videoDelegate videoEncodecData:videoPacket withVideoStream:videoStream];
+    }
+}
+
+#pragma mark - C Functtions
+void * VideoEncdeorCallBack(AVPacket *video_packet,AVStream *video_stream) {
+    [encoder videoCodec:video_packet withVideoStream:video_stream];
     return NULL;
 }
 

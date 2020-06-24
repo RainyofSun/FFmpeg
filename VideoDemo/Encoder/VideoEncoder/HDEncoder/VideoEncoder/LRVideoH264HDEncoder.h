@@ -9,10 +9,20 @@
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 #import "LRImageCameraConfig.h"
+#import "EncoderHeader.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol VideoEncoderDelegate <NSObject>
+
+- (void)videoEncodecData:(AVPacket *)videoPacket withVideoStream:(AVStream *)videoStream;
+
+@end
+
 @interface LRVideoH264HDEncoder : NSObject
+
+/** videoDelegate */
+@property (nonatomic,weak) id<VideoEncoderDelegate> videoDelegate;
 
 - (instancetype)initWithVideoEncoderConfig:(LRImageCameraConfig *)config;
 - (void)H264VideoEncoderWithSampleBuffer:(CMSampleBufferRef)sampleBuffer;

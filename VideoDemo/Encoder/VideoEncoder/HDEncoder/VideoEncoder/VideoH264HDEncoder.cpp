@@ -35,7 +35,7 @@ bool VideoH264HDEncoder::initX264Encoder(int width, int height, int videoBitRate
 }
 
 // 开始编码
-void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(AVPacket *)) {
+void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(AVPacket *, AVStream *)) {
     // YUV data
     pFrame->data[0] = buffer.y_frame;   // Y
     pFrame->data[1] = buffer.u_frame;   // U
@@ -54,7 +54,7 @@ void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(
         // 将视频压缩数据写入输出文件中
         packet->stream_index = video_stream->index;
         // 编码数据返回上层处理
-        VideoEncodeCallBack(packet);
+        VideoEncodeCallBack(packet,this->video_stream);
         if (this->isNeedWriteLocal) {
             this->encode_result = av_write_frame(avFormatCtx, packet);
             printf("Successed to encode frame: %5d\tsize:%5d\n",frameCounter,packet->size);

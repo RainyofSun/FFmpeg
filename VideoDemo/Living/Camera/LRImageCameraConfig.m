@@ -34,4 +34,11 @@
     _audioFilePath = audioFilePath;
 }
 
+- (void)setMuxFilePath:(NSString *)muxFilePath {
+    if (muxFilePath.length) {
+        muxFilePath = [CommonUtil documentsPath:muxFilePath];
+    }
+    _muxFilePath = muxFilePath;
+}
+
 @end

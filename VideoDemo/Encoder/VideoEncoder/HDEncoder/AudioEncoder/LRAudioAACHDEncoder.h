@@ -8,10 +8,20 @@
 
 #import <Foundation/Foundation.h>
 #import "LRImageCameraConfig.h"
+#import "EncoderHeader.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol AudioEncoderDelegate <NSObject>
+
+- (void)audioEncodecData:(AVPacket *)audioPacket withAudioStream:(AVStream *)audioStream;
+
+@end
+
 @interface LRAudioAACHDEncoder : NSObject
+
+/** audioDelegate */
+@property (nonatomic,weak) id<AudioEncoderDelegate> audioDelegate;
 
 - (instancetype)initWithAudioEncoderConfig:(LRImageCameraConfig *)config;
 - (void)AACAudioEncoderWithBytes:(uint8_t *)audioData dataLength:(int)length;

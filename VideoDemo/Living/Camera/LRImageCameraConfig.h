@@ -48,6 +48,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic,copy) NSString *videoFilePath;
 /** audioFilePath */
 @property (nonatomic,copy) NSString *audioFilePath;
+/** muxFilePath */
+@property (nonatomic,copy) NSString *muxFilePath;
 
 @end
 

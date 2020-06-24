@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		13170E7D249C6ECF00FA9D75 /* HardwareDeviceScheduler.m in Sources */ = {isa = PBXBuildFile; fileRef = 13170E7C249C6ECF00FA9D75 /* HardwareDeviceScheduler.m */; };
+		13170E7D249C6ECF00FA9D75 /* HardwareDeviceScheduler.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13170E7C249C6ECF00FA9D75 /* HardwareDeviceScheduler.mm */; };
 		13170E8A249C75E900FA9D75 /* LRAudioAACHDEncoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13170E85249C75E900FA9D75 /* LRAudioAACHDEncoder.mm */; };
 		13170E8B249C75E900FA9D75 /* AudioAACEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13170E86249C75E900FA9D75 /* AudioAACEncoder.cpp */; };
 		13170E8C249C75E900FA9D75 /* AudioEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13170E87249C75E900FA9D75 /* AudioEncoder.cpp */; };
@@ -39,6 +39,7 @@
 		1319909E2491D79200A5125F /* libx264.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 131990952491D79200A5125F /* libx264.a */; };
 		131990DF2492385700A5125F /* libyuv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 131990DE2492385700A5125F /* libyuv.a */; };
 		1319AE4A2493185000CA0ED9 /* LRVideoAudioDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1319AE482493185000CA0ED9 /* LRVideoAudioDevice.cpp */; };
+		131AA4F824A33AEB00A94C72 /* Mp4Synthesis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 131AA4F624A33AEB00A94C72 /* Mp4Synthesis.cpp */; };
 		131B9932248F2933007144E1 /* EncoderViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 131B9930248F2933007144E1 /* EncoderViewController.mm */; };
 		131B9933248F2933007144E1 /* EncoderViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 131B9931248F2933007144E1 /* EncoderViewController.xib */; };
 		131B9936248F2A6E007144E1 /* LRAVVideoCamera.m in Sources */ = {isa = PBXBuildFile; fileRef = 131B9935248F2A6E007144E1 /* LRAVVideoCamera.m */; };
@@ -67,7 +68,7 @@
 
 /* Begin PBXFileReference section */
 		13170E7B249C6ECF00FA9D75 /* HardwareDeviceScheduler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HardwareDeviceScheduler.h; sourceTree = "<group>"; };
-		13170E7C249C6ECF00FA9D75 /* HardwareDeviceScheduler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HardwareDeviceScheduler.m; sourceTree = "<group>"; };
+		13170E7C249C6ECF00FA9D75 /* HardwareDeviceScheduler.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = HardwareDeviceScheduler.mm; sourceTree = "<group>"; };
 		13170E84249C75E900FA9D75 /* LRAudioAACHDEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LRAudioAACHDEncoder.h; sourceTree = "<group>"; };
 		13170E85249C75E900FA9D75 /* LRAudioAACHDEncoder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LRAudioAACHDEncoder.mm; sourceTree = "<group>"; };
 		13170E86249C75E900FA9D75 /* AudioAACEncoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AudioAACEncoder.cpp; sourceTree = "<group>"; };
@@ -143,6 +144,10 @@
 		1319AE482493185000CA0ED9 /* LRVideoAudioDevice.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = LRVideoAudioDevice.cpp; sourceTree = "<group>"; };
 		1319AE492493185000CA0ED9 /* LRVideoAudioDevice.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = LRVideoAudioDevice.hpp; sourceTree = "<group>"; };
 		1319AE4B2493187800CA0ED9 /* DeviceHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DeviceHeader.h; sourceTree = "<group>"; };
+		131AA4F624A33AEB00A94C72 /* Mp4Synthesis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Mp4Synthesis.cpp; sourceTree = "<group>"; };
+		131AA4F724A33AEB00A94C72 /* Mp4Synthesis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Mp4Synthesis.h; sourceTree = "<group>"; };
+		131AA4FE24A33BDB00A94C72 /* h264test.h264 */ = {isa = PBXFileReference; lastKnownFileType = file; path = h264test.h264; sourceTree = "<group>"; };
+		131AA4FF24A33BE700A94C72 /* free_aduio.aac */ = {isa = PBXFileReference; lastKnownFileType = file; path = free_aduio.aac; sourceTree = "<group>"; };
 		131B992F248F2933007144E1 /* EncoderViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EncoderViewController.h; sourceTree = "<group>"; };
 		131B9930248F2933007144E1 /* EncoderViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EncoderViewController.mm; sourceTree = "<group>"; };
 		131B9931248F2933007144E1 /* EncoderViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = EncoderViewController.xib; sourceTree = "<group>"; };
@@ -340,7 +345,7 @@
 			isa = PBXGroup;
 			children = (
 				13170E7B249C6ECF00FA9D75 /* HardwareDeviceScheduler.h */,
-				13170E7C249C6ECF00FA9D75 /* HardwareDeviceScheduler.m */,
+				13170E7C249C6ECF00FA9D75 /* HardwareDeviceScheduler.mm */,
 				1318E1A724A1F066002962D4 /* MediaSchedular.cpp */,
 				1318E1A824A1F066002962D4 /* MediaSchedular.hpp */,
 			);
@@ -376,6 +381,8 @@
 		13170E9E249CB89900FA9D75 /* MuxHander */ = {
 			isa = PBXGroup;
 			children = (
+				131AA4F624A33AEB00A94C72 /* Mp4Synthesis.cpp */,
+				131AA4F724A33AEB00A94C72 /* Mp4Synthesis.h */,
 				13170E9F249CB8F800FA9D75 /* LRVideoAudioMuxHander.cpp */,
 				13170EA0249CB8F800FA9D75 /* LRVideoAudioMuxHander.hpp */,
 				13170EA2249CBA9B00FA9D75 /* LRAVPacketList.cpp */,
@@ -527,6 +534,15 @@
 				1319AE4B2493187800CA0ED9 /* DeviceHeader.h */,
 			);
 			path = Device;
+			sourceTree = "<group>";
+		};
+		131AA4F924A33B9700A94C72 /* Res */ = {
+			isa = PBXGroup;
+			children = (
+				131AA4FF24A33BE700A94C72 /* free_aduio.aac */,
+				131AA4FE24A33BDB00A94C72 /* h264test.h264 */,
+			);
+			path = Res;
 			sourceTree = "<group>";
 		};
 		131B992D248F28C1007144E1 /* Encoder */ = {
@@ -810,14 +826,15 @@
 			isa = PBXGroup;
 			children = (
 				131B992D248F28C1007144E1 /* Encoder */,
-				133586EA2484FA500009B106 /* Lib */,
 				133586E32484F5E10009B106 /* Living */,
-				133586D92484F4AB0009B106 /* Delegate */,
-				133586DA2484F4B60009B106 /* MainVC */,
-				133586D12484F3960009B106 /* Info.plist */,
-				133586CE2484F3960009B106 /* LaunchScreen.storyboard */,
 				133586D22484F3960009B106 /* main.m */,
+				133586D12484F3960009B106 /* Info.plist */,
 				133586CC2484F3960009B106 /* Assets.xcassets */,
+				133586D92484F4AB0009B106 /* Delegate */,
+				133586CE2484F3960009B106 /* LaunchScreen.storyboard */,
+				133586EA2484FA500009B106 /* Lib */,
+				133586DA2484F4B60009B106 /* MainVC */,
+				131AA4F924A33B9700A94C72 /* Res */,
 			);
 			path = VideoDemo;
 			sourceTree = "<group>";
@@ -1023,6 +1040,7 @@
 				133586E12484F5460009B106 /* MainViewController.m in Sources */,
 				13170E8A249C75E900FA9D75 /* LRAudioAACHDEncoder.mm in Sources */,
 				131990792491C73600A5125F /* VideoH264SoftEncoder.cpp in Sources */,
+				131AA4F824A33AEB00A94C72 /* Mp4Synthesis.cpp in Sources */,
 				133E4C682487A0A500E566CF /* LRImageTextureFrame.m in Sources */,
 				1319AE4A2493185000CA0ED9 /* LRVideoAudioDevice.cpp in Sources */,
 				132FD610249B1822000D91BA /* AudioViewController.m in Sources */,
@@ -1031,7 +1049,7 @@
 				133E4C5A2487886600E566CF /* LRImageOutput.m in Sources */,
 				13181A022490D8D80069EC4E /* color_conversion_armv7a.cpp in Sources */,
 				13170E95249C75F000FA9D75 /* VideoH264HDEncoder.cpp in Sources */,
-				13170E7D249C6ECF00FA9D75 /* HardwareDeviceScheduler.m in Sources */,
+				13170E7D249C6ECF00FA9D75 /* HardwareDeviceScheduler.mm in Sources */,
 				133586D32484F3960009B106 /* main.m in Sources */,
 				133E4C5E24878E0500E566CF /* LRImageCameraConfig.m in Sources */,
 				1318E00C2488E71200412985 /* LRImageCameraRender.m in Sources */,

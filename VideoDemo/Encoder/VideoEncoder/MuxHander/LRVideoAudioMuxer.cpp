@@ -171,8 +171,6 @@ void LRVideoAudioMuxer::initGlobalVar() {
     this->video_index_out = 0;
     this->audio_index_out = 0;
     this->frame_index = 0;
-    this->cur_pts_v = 0;
-    this->cur_pts_a = 0;
     this->hasFilePath = strlen(this->muxFilePath) != 0;
     this->writeHeaderSeccess = true;
     
@@ -196,7 +194,7 @@ int LRVideoAudioMuxer::configureFFmpegFormat() {
         ret = avformat_write_header(ofmt_ctx, NULL);
         if (ret < 0) {
             this->writeHeaderSeccess = false;
-            printf("文件头写入失败");
+            printf("文件头写入失败 %s\n",av_err2str(ret));
             return ret;
         }
     }

@@ -28,7 +28,7 @@ bool AudioEncoder::initAACEncoder(int sample_rate, int channels, int bit_rate, i
     return ret >= 0;
 }
 
-int AudioEncoder::aacEncode(uint8_t *buffer, int size, void *(*AudioEncoderCallBack)(AVPacket *)) {
+int AudioEncoder::aacEncode(uint8_t *buffer, int size, void *(*AudioEncoderCallBack)(AVPacket *,AVStream *)) {
     int bufferCursor = 0;
     int bufferSize = size;
     while (bufferSize >= (buffer_size - samplesCursor)) {
@@ -191,7 +191,7 @@ int AudioEncoder::find_audio_codec() {
 }
 
 // 编码一帧数据
-int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *)) {
+int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *,AVStream *)) {
     // 设置采样数据格式
     audio_frame->data[0] = this->pcm_samples;
     audio_frame->pts = i * 100;
@@ -213,7 +213,7 @@ int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *)) {
         frame_current ++;
         audio_packet->stream_index = audio_stream->index;
         // 编码数据返回上层处理
-        AudioEncoderCallBack(audio_packet);
+        AudioEncoderCallBack(audio_packet,this->audio_stream);
         if (this->isNeedWriteLocal) {
             ret = av_write_frame(avFormatCtx, audio_packet);
             if (ret < 0) {

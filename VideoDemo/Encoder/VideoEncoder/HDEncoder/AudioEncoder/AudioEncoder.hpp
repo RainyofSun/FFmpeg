@@ -39,7 +39,7 @@ private:
     int openOutputFile();
     int find_audio_codec();
     
-    int audio_encode(void *(*AudioEncoderCallBack)(AVPacket *audio_packet));
+    int audio_encode(void *(*AudioEncoderCallBack)(AVPacket *audio_packet,AVStream *audio_stream));
     
     int flush_encoder();
     
@@ -57,7 +57,7 @@ public:
     /**
      * 开始编码
      */
-    int aacEncode(byte *buffer, int size,void *(*AudioEncoderCallBack)(AVPacket *audio_packet));
+    int aacEncode(byte *buffer, int size,void *(*AudioEncoderCallBack)(AVPacket *audio_packet,AVStream *audio_stream));
     
     /**
      * 释放编码器

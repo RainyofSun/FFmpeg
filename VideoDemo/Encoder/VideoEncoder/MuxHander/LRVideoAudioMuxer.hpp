@@ -35,8 +35,6 @@ private:
     int video_index_out;
     int audio_index_out;
     int frame_index;
-    int64_t cur_pts_v;
-    int64_t cur_pts_a;
     
     const char *muxFilePath;
     bool hasFilePath;
