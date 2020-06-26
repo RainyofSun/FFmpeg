@@ -14,7 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol AudioEncoderDelegate <NSObject>
 
-- (void)audioEncodecData:(AVPacket *)audioPacket withAudioStream:(AVStream *)audioStream;
+- (void)audioEncodecData:(AVPacket *)audioPacket;
+- (void)encodeAudioStream:(AVStream *)audioStream;
 
 @end
 
@@ -23,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 /** audioDelegate */
 @property (nonatomic,weak) id<AudioEncoderDelegate> audioDelegate;
 
-- (instancetype)initWithAudioEncoderConfig:(LRImageCameraConfig *)config;
+- (instancetype)initWithAudioEncoderConfig:(LRImageCameraConfig *)config audioDelegate:(id<AudioEncoderDelegate>)audioDelegate;
 - (void)AACAudioEncoderWithBytes:(uint8_t *)audioData dataLength:(int)length;
 
 @end

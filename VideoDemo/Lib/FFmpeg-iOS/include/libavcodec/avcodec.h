@@ -3565,7 +3565,7 @@ typedef struct AVCodec {
     int (*encode_sub)(AVCodecContext *, uint8_t *buf, int buf_size,
                       const struct AVSubtitle *sub);
     /**
-     * Encode data to an AVPacket.
+     * Encode data to an AVPacket.d
      *
      * @param      avctx          codec context
      * @param      avpkt          output AVPacket (may contain a user-provided buffer)

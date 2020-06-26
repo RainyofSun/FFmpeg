@@ -28,7 +28,7 @@ bool AudioEncoder::initAACEncoder(int sample_rate, int channels, int bit_rate, i
     return ret >= 0;
 }
 
-int AudioEncoder::aacEncode(uint8_t *buffer, int size, void *(*AudioEncoderCallBack)(AVPacket *,AVStream *)) {
+int AudioEncoder::aacEncode(uint8_t *buffer, int size, void *(*AudioEncoderCallBack)(AVPacket *)) {
     int bufferCursor = 0;
     int bufferSize = size;
     while (bufferSize >= (buffer_size - samplesCursor)) {
@@ -66,7 +66,6 @@ void AudioEncoder::freeAACEncode() {
     
     avcodec_close(avAudioCtx);
     av_free(audio_stream);
-    av_packet_free(&audio_packet);
     avio_close(avFormatCtx->pb);
 }
 
@@ -89,9 +88,6 @@ int AudioEncoder::malloc_audio_stream() {
             return ret;
         }
     }
-    
-    // 创建输出码流--创建一块内存空间--这里不知道是什么类型的流
-    audio_stream = avformat_new_stream(avFormatCtx, NULL);
     
     // 查找、打开音频编码器
     ret = this->find_audio_codec();
@@ -127,8 +123,21 @@ int AudioEncoder::malloc_audio_pFrame() {
         LOGI("Could not setup audio frame reason = %s\n",av_err2str(ret));
         return -1;
     }
-    // 创建音频帧压缩数据--帧缓存空间
-    audio_packet = (AVPacket *)av_malloc(this->buffer_size);
+    
+    audio_stream->codecpar->codec_tag = 0;
+    audio_stream->time_base = audio_stream->codec->time_base;
+    //从编码器复制参数
+    avcodec_parameters_from_context(audio_stream->codecpar, avAudioCtx);
+    
+    if (this->isNeedWriteLocal) {
+        // 写文件头
+        if (avformat_write_header(avFormatCtx, NULL) < 0) {
+            this->writeHeaderSeccess = false;
+            printf("文件头写入失败");
+            return -1;
+        }
+    }
+    
     return 0;
 }
 
@@ -145,8 +154,22 @@ int AudioEncoder::openOutputFile() {
 
 // 查找、打开音频编码器
 int AudioEncoder::find_audio_codec() {
+    // 查找音频编码器
+    audio_codec = avcodec_find_encoder_by_name("aac_at");
+    audio_codec->id = AV_CODEC_ID_AAC;
+    audio_codec->type = AVMEDIA_TYPE_AUDIO;
+    
+    if (!audio_codec) {
+        printf("未找到音频编码器");
+        return -1;
+    }
+    
+    // 创建输出码流--创建一块内存空间--这里不知道是什么类型的流
+    audio_stream = avformat_new_stream(avFormatCtx, audio_codec);
+    
     // 获取编码器上下文
-    avAudioCtx = this->audio_stream->codec;
+//    avAudioCtx = this->audio_stream->codec;
+    avAudioCtx = avcodec_alloc_context3(audio_codec);
     // 设置编码器上下文参数
     avAudioCtx->codec_id = avOutputCtx->audio_codec;
     // 编码格式
@@ -164,34 +187,23 @@ int AudioEncoder::find_audio_codec() {
     avAudioCtx->frame_size = 1024;
     avAudioCtx->time_base.num = 1;
     avAudioCtx->time_base.den = avAudioCtx->sample_rate;
-    avAudioCtx->profile = FF_PROFILE_AAC_MAIN ;
+    avAudioCtx->profile = FF_PROFILE_AAC_MAIN;
     avAudioCtx->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
-    // 查找音频编码器
-    audio_codec = avcodec_find_encoder_by_name("aac_at");
-    if (!audio_codec) {
-        printf("未找到音频编码器");
-        return -1;
+    if(avAudioCtx->flags & AVFMT_GLOBALHEADER) {
+        avAudioCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
+    
     // 打开音频编码器
     if (avcodec_open2(avAudioCtx, audio_codec, NULL) < 0) {
         printf("打开编码器失败");
         return -1;
     }
     
-    if (this->isNeedWriteLocal) {
-        // 写文件头
-        if (avformat_write_header(avFormatCtx, NULL) < 0) {
-            this->writeHeaderSeccess = false;
-            printf("文件头写入失败");
-            return -1;
-        }
-    }
-    
     return 0;
 }
 
 // 编码一帧数据
-int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *,AVStream *)) {
+int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *)) {
     // 设置采样数据格式
     audio_frame->data[0] = this->pcm_samples;
     audio_frame->pts = i * 100;
@@ -205,7 +217,10 @@ int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *,AVStream
         printf("failed to send Frame %s\n",av_err2str(ret));
         return ret;
     }
+    // 创建音频帧压缩数据--帧缓存空间
+    AVPacket *audio_packet = (AVPacket *)av_malloc(sizeof(AVPacket));
     // 编码一帧采样数据
+    memset(audio_packet, 0, sizeof(AVPacket));
     ret = avcodec_receive_packet(avAudioCtx, audio_packet);
     if (ret == 0) {
         // 编码后的音频流写入文件
@@ -213,7 +228,7 @@ int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *,AVStream
         frame_current ++;
         audio_packet->stream_index = audio_stream->index;
         // 编码数据返回上层处理
-        AudioEncoderCallBack(audio_packet,this->audio_stream);
+        AudioEncoderCallBack(audio_packet);
         if (this->isNeedWriteLocal) {
             ret = av_write_frame(avFormatCtx, audio_packet);
             if (ret < 0) {
@@ -221,7 +236,6 @@ int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *,AVStream
                 return ret;
             }
         }
-        av_free_packet(audio_packet);
     } else {
         printf("编码失败\n");
         return ret;

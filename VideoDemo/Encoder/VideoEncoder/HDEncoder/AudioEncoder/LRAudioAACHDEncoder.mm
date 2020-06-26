@@ -12,44 +12,51 @@
 
 static LRAudioAACHDEncoder *audioEncode = nil;
 
-@implementation LRAudioAACHDEncoder
-{
-    AudioEncoder audioEncoder;
-    bool    isSucess;
-}
+@interface LRAudioAACHDEncoder ()
 
-- (instancetype)initWithAudioEncoderConfig:(LRImageCameraConfig *)config {
+@property (nonatomic)AudioEncoder audioEncoder;
+@property (nonatomic,assign)bool isSucess;
+
+@end
+
+@implementation LRAudioAACHDEncoder
+
+- (instancetype)initWithAudioEncoderConfig:(LRImageCameraConfig *)config audioDelegate:(nonnull id<AudioEncoderDelegate>)audioDelegate {
     if (self = [super init]) {
         audioEncode = self;
-        isSucess = audioEncoder.initAACEncoder(config.sampleRate, config.channelsPerFrame, config.audioBitRate,[config.audioFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
-        if (!isSucess) {
+        self.audioDelegate = audioDelegate;
+        _isSucess = _audioEncoder.initAACEncoder(config.sampleRate, config.channelsPerFrame, config.audioBitRate,[config.audioFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
+        if (!_isSucess) {
             NSLog(@"创建Audio编码器失败");
+        }
+        if (self.audioDelegate != nil && [self.audioDelegate respondsToSelector:@selector(encodeAudioStream:)]) {
+            [self.audioDelegate encodeAudioStream:_audioEncoder.audio_stream];
         }
     }
     return self;
 }
 
 - (void)dealloc {
-    if (isSucess) {
-        audioEncoder.freeAACEncode();
+    if (_isSucess) {
+        _audioEncoder.freeAACEncode();
     }
     NSLog(@"DELLOC %@",NSStringFromClass(self.class));
 }
 
 - (void)AACAudioEncoderWithBytes:(uint8_t *)audioData dataLength:(int)length {
-    audioEncoder.aacEncode(audioData, length,AudioEncdeorCallBack);
+    _audioEncoder.aacEncode(audioData, length,AudioEncdeorCallBack);
 }
 
 #pragma mark - private methods
-- (void)audioEncdeo:(AVPacket *)audioPacket withAudioStream:(AVStream *)audioStream {
-    if (self.audioDelegate != nil && [self.audioDelegate respondsToSelector:@selector(audioEncodecData:withAudioStream:)]) {
-        [self.audioDelegate audioEncodecData:audioPacket withAudioStream:audioStream];
+- (void)audioEncdeo:(AVPacket *)audioPacket {
+    if (self.audioDelegate != nil && [self.audioDelegate respondsToSelector:@selector(audioEncodecData:)]) {
+        [self.audioDelegate audioEncodecData:audioPacket];
     }
 }
 
 #pragma mark - C Functions
-void *AudioEncdeorCallBack(AVPacket *audio_packet,AVStream *audio_stream) {
-    [audioEncode audioEncdeo:audio_packet withAudioStream:audio_stream];
+void *AudioEncdeorCallBack(AVPacket *audio_packet) {
+    [audioEncode audioEncdeo:audio_packet];
     return NULL;
 }
 

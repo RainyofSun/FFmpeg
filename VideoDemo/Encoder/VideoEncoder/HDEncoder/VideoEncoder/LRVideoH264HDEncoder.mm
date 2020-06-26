@@ -13,33 +13,40 @@
 
 static LRVideoH264HDEncoder *encoder = nil;
 
-@implementation LRVideoH264HDEncoder
-{
-    VideoH264HDEncoder videoEncoder;
-    NV12ToYUV420P convert;
-    bool    isSucess;
-}
+@interface LRVideoH264HDEncoder ()
 
-- (instancetype)initWithVideoEncoderConfig:(LRImageCameraConfig *)config {
+@property (nonatomic)VideoH264HDEncoder videoEncoder;
+@property (nonatomic)NV12ToYUV420P vonvert;
+@property (nonatomic,assign)bool isSucess;
+
+@end
+
+@implementation LRVideoH264HDEncoder
+
+- (instancetype)initWithVideoEncoderConfig:(LRImageCameraConfig *)config videoDelegate:(nonnull id<VideoEncoderDelegate>)videoDelegate {
     if (self = [super init]) {
+        self.videoDelegate = videoDelegate;
         encoder = self;
-        isSucess = videoEncoder.initX264Encoder(config.videoWidth, config.videoHeight, config.videoBitRate, config.frameRate,[config.videoFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
-        if (!isSucess) {
+        _isSucess = _videoEncoder.initX264Encoder(config.videoWidth, config.videoHeight, config.videoBitRate, config.frameRate,[config.videoFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
+        if (!_isSucess) {
             NSLog(@"创建Video编码器失败");
+        }
+        if (self.videoDelegate != nil && [self.videoDelegate respondsToSelector:@selector(encodeVideoStream:)]) {
+            [self.videoDelegate encodeVideoStream:_videoEncoder.video_stream];
         }
     }
     return self;
 }
 
 - (void)dealloc {
-    if (isSucess) {
-        videoEncoder.freeEncoder();
+    if (_isSucess) {
+        _videoEncoder.freeEncoder();
     }
     NSLog(@"DELLOC %@",NSStringFromClass(self.class));
 }
 
 - (void)H264VideoEncoderWithSampleBuffer:(CMSampleBufferRef)sampleBuffer {
-    if (!isSucess) {
+    if (!_isSucess) {
         return;
     }
     CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
@@ -52,15 +59,15 @@ static LRVideoH264HDEncoder *encoder = nil;
     uint8_t *uv_frame = (uint8_t *)CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 1);
     int src_stride_y = (int)CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0);
     int src_stride_uv = (int)CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 1);
-    I420Buffer buffer = convert.convertNV12BufferToI420Buffer(y_frame, uv_frame, src_stride_y, src_stride_uv, (int)pixelWidth, (int)pixelHeight);
-    videoEncoder.encode(buffer,VideoEncdeorCallBack);
+    I420Buffer buffer = _vonvert.convertNV12BufferToI420Buffer(y_frame, uv_frame, src_stride_y, src_stride_uv, (int)pixelWidth, (int)pixelHeight);
+    _videoEncoder.encode(buffer,VideoEncdeorCallBack);
     CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
     CFRelease(pixelBuffer);
-    convert.freeI420Buffer(buffer);
+    _vonvert.freeI420Buffer(buffer);
 }
 
 - (void)AACAudioEncoderWithSampleBuffer:(CMSampleBufferRef)sampleBuffer {
-    if (!isSucess) {
+    if (!_isSucess) {
         return;
     }
     CMAudioFormatDescriptionRef audioFormatDes =  (CMAudioFormatDescriptionRef)CMSampleBufferGetFormatDescription(sampleBuffer);
@@ -76,15 +83,15 @@ static LRVideoH264HDEncoder *encoder = nil;
 }
 
 #pragma mark - private methods
-- (void)videoCodec:(AVPacket *)videoPacket withVideoStream:(AVStream *)videoStream {
-    if (self.videoDelegate != nil && [self.videoDelegate respondsToSelector:@selector(videoEncodecData:withVideoStream:)]) {
-        [self.videoDelegate videoEncodecData:videoPacket withVideoStream:videoStream];
+- (void)videoCodec:(AVPacket *)videoPacket {
+    if (self.videoDelegate != nil && [self.videoDelegate respondsToSelector:@selector(videoEncodecData:)]) {
+        [self.videoDelegate videoEncodecData:videoPacket];
     }
 }
 
 #pragma mark - C Functtions
-void * VideoEncdeorCallBack(AVPacket *video_packet,AVStream *video_stream) {
-    [encoder videoCodec:video_packet withVideoStream:video_stream];
+void * VideoEncdeorCallBack(AVPacket *video_packet) {
+    [encoder videoCodec:video_packet];
     return NULL;
 }
 
