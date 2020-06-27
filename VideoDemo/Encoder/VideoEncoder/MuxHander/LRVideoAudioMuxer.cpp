@@ -39,29 +39,41 @@ bool LRVideoAudioMuxer::prepareForMux(const char *muxFilePath) {
 
 // 初始化视频/音频BitStreamFilter
 bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream, AVStream *audio_stream) {
-    this->m_video_stream = avformat_new_stream(ofmt_ctx, video_stream->codec->codec);
+    AVStream *m_video_stream = avformat_new_stream(ofmt_ctx, video_stream->codec->codec);
     // 添加解码器属性
     int ret = 0;
     
     ret = avcodec_parameters_copy(this->h264Ctx->par_in, video_stream->codecpar);
-    if (!this->m_video_stream) {
+    if (!m_video_stream) {
         printf("Failed allocating output stream\n");
         return false;
     }
-    this->video_index_out = this->m_video_stream->index;
+    
+    ret = avcodec_parameters_from_context(m_video_stream->codecpar, video_stream->codec);
+//    ret = avcodec_copy_context(m_video_stream->codec, video_stream->codec);
+    
+    if (ret < 0) {
+        printf("Failed to copy context from input to output stream codec context\n");
+        return false;
+    }
     
     // 初始化过滤器上下文
     ret = av_bsf_init(this->h264Ctx);
     
-    this->m_audio_stream = avformat_new_stream(ofmt_ctx, audio_stream->codec->codec);
+    AVStream *m_audio_stream = avformat_new_stream(ofmt_ctx, audio_stream->codec->codec);
     // 添加解码器属性
     ret = avcodec_parameters_copy(this->aacCtx->par_in, audio_stream->codecpar);
     
-    if (!this->m_audio_stream) {
+    if (!m_audio_stream) {
         printf("Failed allocating output stream\n");
         return false;
     }
-    this->audio_index_out = audio_stream->index;
+    ret = avcodec_parameters_from_context(m_audio_stream->codecpar, audio_stream->codec);
+    
+    if (ret < 0) {
+        printf("Failed to copy context from input to output stream codec context\n");
+        return false;
+    }
     
     // 初始化过滤器上下文
     ret = av_bsf_init(this->aacCtx);
@@ -74,10 +86,6 @@ bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream,
         return false;
     }
     return true;
-}
-
-void free(void *opaque, uint8_t *data) {
-    
 }
 
 // 追加视频数据
@@ -128,8 +136,6 @@ void LRVideoAudioMuxer::addAudioData(AVPacket *audio_pkt) {
 // 销毁混流器
 void LRVideoAudioMuxer::freeMuxHander() {
     printf("mux 开始析构");
-    av_free(this->m_video_stream);
-    av_free(this->m_audio_stream);
     avio_close(this->ofmt_ctx->pb);
     avformat_free_context(this->ofmt_ctx);
     av_bsf_free(&this->h264Ctx);
@@ -170,9 +176,6 @@ int LRVideoAudioMuxer::initBitStreamFilter() {
 void LRVideoAudioMuxer::initGlobalVar() {
     this->ofmt      = NULL;
     this->ofmt_ctx  = NULL;
-    this->video_index_out = 0;
-    this->audio_index_out = 0;
-    this->frame_index = 0;
     this->hasFilePath = strlen(this->muxFilePath) != 0;
     this->writeHeaderSeccess = true;
     

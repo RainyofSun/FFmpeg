@@ -26,14 +26,6 @@ private:
     LRAVPacketList      m_videoListPacket;
     LRAVPacketList      m_audioListPacket;
     
-    /* current capture a/v stream */
-    AVStream            *m_video_stream;
-    AVStream            *m_audio_stream;
-    
-    int video_index_out;
-    int audio_index_out;
-    int frame_index;
-    
     const char *muxFilePath;
     bool hasFilePath;
     bool writeHeaderSeccess;

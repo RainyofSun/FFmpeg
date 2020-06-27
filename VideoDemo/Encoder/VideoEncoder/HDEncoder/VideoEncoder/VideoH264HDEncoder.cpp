@@ -144,6 +144,10 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
     }
     // 创建输出码流
     video_stream = avformat_new_stream(avFormatCtx, NULL);
+    video_stream->time_base.den = frameRate;
+    video_stream->time_base.num = 1;
+    video_stream->codecpar->codec_tag = 0;
+    video_stream->time_base = video_stream->codec->time_base;
     
     // 获取编码器上下文
     pCodecCtx = avcodec_alloc_context3(pCodec);
@@ -199,6 +203,10 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
     // 一般情况下都是默认值，最小量化系数默认值是10，最大量化系数默认值是51
     pCodecCtx->qmin = 10;
     pCodecCtx->qmax = 51;
+    pCodecCtx->me_range = 16;
+    pCodecCtx->max_qdiff = 4;
+    pCodecCtx->qcompress = 0.6;
+
     // 码率控制
     pCodecCtx->rc_min_rate = videoBitRate - delta * 1000;
     pCodecCtx->rc_max_rate = videoBitRate + delta * 1000;
@@ -206,6 +214,9 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
     if(pCodecCtx->flags & AVFMT_GLOBALHEADER){
         pCodecCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
+    
+    //从编码器复制参数
+    avcodec_parameters_from_context(video_stream->codecpar, pCodecCtx);
     
     // h264 编码配置
     AVDictionary *params = NULL;
@@ -216,6 +227,9 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
         av_dict_set(&params, "tune", "zerolatency", 0);
         av_dict_set(&params, "profile", "main", 0);
     }
+    
+    //Show some Information
+    av_dump_format(avFormatCtx, 0, this->videoFilePath, 1);
     
     // 打开编码器
     ret = avcodec_open2(pCodecCtx, pCodec, &params);
