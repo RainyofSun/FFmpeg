@@ -94,13 +94,13 @@ void MediaSchedular::initGlobalVar() {
 
 #pragma mark - C Functions
 // 视频编码回调
-void* MediaSchedular::VideoEncodeCallBack(AVPacket *video_packet,AVStream *video_stream) {
+void* MediaSchedular::VideoEncodeCallBack(AVPacket *video_packet) {
     
     return NULL;
 }
 
 // 音频编码回调
-void* MediaSchedular::AudioEncodeCallBack(AVPacket *audio_packet,AVStream *audio_stream) {
+void* MediaSchedular::AudioEncodeCallBack(AVPacket *audio_packet) {
     
     return NULL;
 }

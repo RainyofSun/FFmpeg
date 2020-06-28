@@ -16,10 +16,8 @@ class VideoH264HDEncoder {
 private:
     AVCodecContext  *pCodecCtx;
     AVCodec         *pCodec;
-    AVPacket        *packet;
     AVFrame         *pFrame;
     AVOutputFormat  *avOutputCtx;
-    AVStream        *video_stream;
     AVFormatContext *avFormatCtx;
     
     int             pictureSize;
@@ -38,6 +36,8 @@ private:
     int flush_encoder();
     
 public:
+    AVStream        *video_stream;
+    
     /**
      * 视频H264编码
      * width        视频宽
@@ -51,7 +51,7 @@ public:
     /**
      * 开始编码
      */
-    void encode(I420Buffer buffer,void *(*VideoEncodeCallBack)(AVPacket *video_packet,AVStream *video_stream));
+    void encode(I420Buffer buffer,void *(*VideoEncodeCallBack)(AVPacket *video_packet));
     
     /**
      * 销毁编码器

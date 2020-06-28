@@ -53,8 +53,8 @@ private:
     // 初始化参数集
     void initGlobalVar();
     // 编码回调
-    static void *VideoEncodeCallBack(AVPacket *video_packet,AVStream *video_stream);
-    static void *AudioEncodeCallBack(AVPacket *audio_packet,AVStream *audio_stream);
+    static void *VideoEncodeCallBack(AVPacket *video_packet);
+    static void *AudioEncodeCallBack(AVPacket *audio_packet);
 
 public:
     

@@ -35,7 +35,7 @@ bool VideoH264HDEncoder::initX264Encoder(int width, int height, int videoBitRate
 }
 
 // 开始编码
-void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(AVPacket *, AVStream *)) {
+void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(AVPacket *)) {
     // YUV data
     pFrame->data[0] = buffer.y_frame;   // Y
     pFrame->data[1] = buffer.u_frame;   // U
@@ -46,6 +46,9 @@ void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(
     // 发送一帧视频像素数据
     avcodec_send_frame(pCodecCtx, pFrame);
     // 接收一帧视频像素数据--编码--视频压缩数据格式
+    AVPacket *packet = (AVPacket *)av_malloc(sizeof(AVPacket));
+    memset(packet, 0, sizeof(AVPacket));
+    // 接收一帧视频像素数据--编码--视频压缩数据格式
     this->encode_result = avcodec_receive_packet(pCodecCtx, packet);
     if (this->encode_result == 0) {
         // 编码成功
@@ -54,7 +57,8 @@ void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(
         // 将视频压缩数据写入输出文件中
         packet->stream_index = video_stream->index;
         // 编码数据返回上层处理
-        VideoEncodeCallBack(packet,this->video_stream);
+        printf("video Buff = %p data = %s\n",packet->buf,packet->data);
+        VideoEncodeCallBack(packet);
         if (this->isNeedWriteLocal) {
             this->encode_result = av_write_frame(avFormatCtx, packet);
             printf("Successed to encode frame: %5d\tsize:%5d\n",frameCounter,packet->size);
@@ -63,7 +67,7 @@ void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(
                 return;
             }
         }
-        av_packet_unref(packet);
+//        av_packet_unref(packet);
     }
 }
 
@@ -85,7 +89,6 @@ void VideoH264HDEncoder::freeEncoder() {
     
     avcodec_close(pCodecCtx);
     av_free(pFrame);
-    av_packet_free(&packet);
     avio_close(avFormatCtx->pb);
     avformat_free_context(avFormatCtx);
     pCodecCtx = NULL;
@@ -111,8 +114,6 @@ int VideoH264HDEncoder::initializationFormat() {
             return ret;
         }
     }
-    // 创建输出码流
-    video_stream = avformat_new_stream(avFormatCtx, NULL);
     return ret;
 }
 
@@ -130,8 +131,27 @@ int VideoH264HDEncoder::openOutputFile() {
 // 初始化编码器上下文
 int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRate,int videoBitRate) {
     int ret = -1;
+    // 查找编码器
+    pCodec = avcodec_find_encoder_by_name("h264_videotoolbox");
+    pCodec->id = AV_CODEC_ID_H264;
+    pCodec->type = AVMEDIA_TYPE_VIDEO;
+    pCodec->pix_fmts = (AVPixelFormat *)AV_PIX_FMT_YUV420P;
+    pCodec->channel_layouts = (uint64_t *)1;
+    
+    if (!pCodec) {
+        printf("未能找到编码器");
+        return ret;
+    }
+    // 创建输出码流
+    video_stream = avformat_new_stream(avFormatCtx, NULL);
+    video_stream->time_base.den = frameRate;
+    video_stream->time_base.num = 1;
+    video_stream->codecpar->codec_tag = 0;
+    video_stream->time_base = video_stream->codec->time_base;
+    
     // 获取编码器上下文
-    pCodecCtx = video_stream->codec;
+    pCodecCtx = avcodec_alloc_context3(pCodec);
+//    pCodecCtx = video_stream->codec;
     // 设置编码器ID
     pCodecCtx->codec_id = avOutputCtx->video_codec;
     // 设置编码器类型
@@ -145,7 +165,7 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
     // f-->帧率：25:000 fps
     // ps表示：时间单位/秒
     pCodecCtx->time_base.num = 1;
-    pCodecCtx->time_base.den = 25;
+    pCodecCtx->time_base.den = frameRate;
     // 设置码率
     // 什么是码率？
     // 含义：每秒传送的比特(bit)数单位为 bps(Bit Per Second)，比特率越高，传送数据速度越快。
@@ -183,18 +203,20 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
     // 一般情况下都是默认值，最小量化系数默认值是10，最大量化系数默认值是51
     pCodecCtx->qmin = 10;
     pCodecCtx->qmax = 51;
+    pCodecCtx->me_range = 16;
+    pCodecCtx->max_qdiff = 4;
+    pCodecCtx->qcompress = 0.6;
+
     // 码率控制
     pCodecCtx->rc_min_rate = videoBitRate - delta * 1000;
     pCodecCtx->rc_max_rate = videoBitRate + delta * 1000;
     pCodecCtx->rc_buffer_size = videoBitRate * 2;
-//    pCodecCtx->flags      |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    // 查找编码器
-    pCodec = avcodec_find_encoder_by_name("h264_videotoolbox");
-    pCodec->id = AV_CODEC_ID_H264;
-    if (!pCodec) {
-        printf("未能找到编码器");
-        return ret;
+    if(pCodecCtx->flags & AVFMT_GLOBALHEADER){
+        pCodecCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
+    
+    //从编码器复制参数
+    avcodec_parameters_from_context(video_stream->codecpar, pCodecCtx);
     
     // h264 编码配置
     AVDictionary *params = NULL;
@@ -205,6 +227,9 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
         av_dict_set(&params, "tune", "zerolatency", 0);
         av_dict_set(&params, "profile", "main", 0);
     }
+    
+    //Show some Information
+    av_dump_format(avFormatCtx, 0, this->videoFilePath, 1);
     
     // 打开编码器
     ret = avcodec_open2(pCodecCtx, pCodec, &params);
@@ -233,11 +258,18 @@ void VideoH264HDEncoder::initializationAVFrame(void) {
     pFrame->format = pCodecCtx->pix_fmt;
     pFrame->width = pCodecCtx->width;
     pFrame->height = pCodecCtx->height;
+    // 宽高比
+    pFrame->sample_aspect_ratio.num = 16;
+    pFrame->sample_aspect_ratio.den = 9;
+    // 时间戳
+    pFrame->pts = 0;
+    // 颜色空间
+    pFrame->color_range = AVCOL_RANGE_MPEG;
+    pFrame->pkt_duration = 0;
+
     // 设置缓冲区和AVFrame类型保持一致
     avpicture_fill((AVPicture *)pFrame, NULL, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height);
 //    av_image_fill_arrays(pFrame->data, pFrame->linesize, this->out_buffer, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height, 0);
-    // 接收一帧视频像素数据--编码--视频压缩数据格式
-    packet = (AVPacket *)av_malloc(this->pictureSize);
 }
 
 // 冲洗编码器

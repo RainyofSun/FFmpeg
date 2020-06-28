@@ -29,8 +29,14 @@
 @property (nonatomic,strong) LRAudioAACHDEncoder *audioEncoder;
 /** encoderQueue */
 @property (nonatomic,strong) dispatch_queue_t encoderQueue;
+/** streamGroup*/
+@property (nonatomic,strong) dispatch_group_t streamGroup;
 /** isSuccess */
 @property (nonatomic,assign) BOOL isSuccess;
+/** videoStream */
+@property (nonatomic) AVStream *videoStream;
+/** audioStream */
+@property (nonatomic) AVStream *audioStream;
 
 @end
 
@@ -39,15 +45,19 @@
 - (instancetype)initWithHardwareDeviceConfig:(LRImageCameraConfig *)config {
     if (self = [super init]) {
         self.encoderQueue = dispatch_queue_create(DISPATCH_QUEUE_SERIAL, NULL);
+        self.streamGroup  = dispatch_group_create();
         self.videoCapture = [[LRAVVideoCamera alloc] initWithCameraConfig:config];
         self.audioCapture = [[AudioCapture alloc] initWithAudioConfig:config];
-        self.videoEncoder = [[LRVideoH264HDEncoder alloc] initWithVideoEncoderConfig:config];
-        self.audioEncoder = [[LRAudioAACHDEncoder alloc] initWithAudioEncoderConfig:config];
+        self.videoEncoder = [[LRVideoH264HDEncoder alloc] initWithVideoEncoderConfig:config videoDelegate:self];
+        self.audioEncoder = [[LRAudioAACHDEncoder alloc] initWithAudioEncoderConfig:config audioDelegate:self];
         self.videoCapture.cameraDelegate    = self;
         self.audioCapture.captureDelegate   = self;
-        self.videoEncoder.videoDelegate     = self;
-        self.audioEncoder.audioDelegate     = self;
         self.isSuccess    = mediaMuxHander.prepareForMux([config.muxFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
+        dispatch_group_notify(self.streamGroup, dispatch_get_main_queue(), ^{
+            if (self.videoStream && self.audioStream) {
+                self->mediaMuxHander.initializationMuxBitStreamFilter(self.videoStream, self.audioStream);
+            }
+        });
         if (!self.isSuccess) {
             NSLog(@"混流器创建失败");
         }
@@ -61,9 +71,6 @@
     self.audioCapture.captureDelegate   = nil;
     self.videoEncoder.videoDelegate     = nil;
     self.audioEncoder.audioDelegate     = nil;
-    if (self.isSuccess) {
-        mediaMuxHander.freeMuxHander();
-    }
 }
 
 - (AVCaptureVideoPreviewLayer *)renderLayer {
@@ -84,6 +91,9 @@
     }
     [self.videoCapture stopCapture];
     [self.audioCapture stopCapture];
+    if (self.isSuccess) {
+        mediaMuxHander.freeMuxHander();
+    }
 }
 
 - (int)switchFrontCamera {
@@ -109,19 +119,31 @@
 }
 
 #pragma mark - VideoEncoderDelegate
-- (void)videoEncodecData:(AVPacket *)videoPacket withVideoStream:(AVStream *)videoStream {
+- (void)videoEncodecData:(AVPacket *)videoPacket {
     if (!self.isSuccess) {
         return;
     }
-    mediaMuxHander.addVideoData(videoPacket, videoStream);
+    mediaMuxHander.addVideoData(videoPacket);
+}
+
+- (void)encodeVideoStream:(AVStream *)videoStream {
+    dispatch_group_enter(self.streamGroup);
+    self.videoStream = videoStream;
+    dispatch_group_leave(self.streamGroup);
 }
 
 #pragma mark - AudioEncoderDelegate
- - (void)audioEncodecData:(AVPacket *)audioPacket withAudioStream:(AVStream *)audioStream {
+ - (void)audioEncodecData:(AVPacket *)audioPacket {
     if (!self.isSuccess) {
         return;
     }
-     mediaMuxHander.addAudioData(audioPacket, audioStream);
+    mediaMuxHander.addAudioData(audioPacket);
+}
+
+- (void)encodeAudioStream:(AVStream *)audioStream {
+    dispatch_group_enter(self.streamGroup);
+    self.audioStream = audioStream;
+    dispatch_group_leave(self.streamGroup);
 }
 
 @end

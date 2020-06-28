@@ -23,13 +23,13 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     self.title = @"开始采集编码";
-//    [self nativeMethods];
-    [self muxTest];
+    [self nativeMethods];
+//    [self muxTest];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
-//    [self.captureSchedular stopCapture];
+    [self.captureSchedular stopCapture];
 }
 
 - (void)nativeMethods {

@@ -20,8 +20,6 @@ private:
     AVCodecContext      *avAudioCtx;
     AVCodec             *audio_codec;
     AVFrame             *audio_frame;
-    AVStream            *audio_stream;
-    AVPacket            *audio_packet;
     
     const char*         aacFilePath;
     int                 sample_rate;
@@ -39,11 +37,13 @@ private:
     int openOutputFile();
     int find_audio_codec();
     
-    int audio_encode(void *(*AudioEncoderCallBack)(AVPacket *audio_packet,AVStream *audio_stream));
+    int audio_encode(void *(*AudioEncoderCallBack)(AVPacket *audio_packet));
     
     int flush_encoder();
     
 public:
+    AVStream            *audio_stream;
+    
     /**
      * 初始化编码器
      * sample_rate  音频采样率
@@ -57,7 +57,7 @@ public:
     /**
      * 开始编码
      */
-    int aacEncode(byte *buffer, int size,void *(*AudioEncoderCallBack)(AVPacket *audio_packet,AVStream *audio_stream));
+    int aacEncode(byte *buffer, int size,void *(*AudioEncoderCallBack)(AVPacket *audio_packet));
     
     /**
      * 释放编码器

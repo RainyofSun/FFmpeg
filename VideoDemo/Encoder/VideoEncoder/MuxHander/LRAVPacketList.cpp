@@ -8,7 +8,7 @@
 
 #include "LRAVPacketList.hpp"
 
-#define MAX_MEDIALIST_LENGTH    100
+#define MAX_MEDIALIST_LENGTH    100 * 1024 * 1024
 
 void LRAVPacketList::initPacketList() {
     pthread_mutex_init(&m_lock, NULL);

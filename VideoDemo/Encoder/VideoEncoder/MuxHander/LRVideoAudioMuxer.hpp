@@ -19,22 +19,12 @@ private:
     AVFormatContext     *ofmt_ctx;
     AVBSFContext        *h264Ctx;
     AVBSFContext        *aacCtx;
-    AVCodecParameters   *h264CodecPar;
-    AVCodecParameters   *aacCodecPar;
     const AVBitStreamFilter   *h264bsfc;
     const AVBitStreamFilter   *aacbsfc;
     
     /* transfer a/v packet data */
     LRAVPacketList      m_videoListPacket;
     LRAVPacketList      m_audioListPacket;
-    
-    /* current capture a/v stream */
-    AVStream            *m_video_stream;
-    AVStream            *m_audio_stream;
-    
-    int video_index_out;
-    int audio_index_out;
-    int frame_index;
     
     const char *muxFilePath;
     bool hasFilePath;
@@ -59,14 +49,19 @@ public:
     bool prepareForMux(const char *muxFilePath);
     
     /**
+     * 初始化视频/音频BitStreamFilter
+     */
+    bool initializationMuxBitStreamFilter(AVStream *video_stream,AVStream *audio_stream);
+    
+    /**
      * 追加视频数据至混流器
      */
-    void addVideoData(AVPacket *video_pkt, AVStream *video_stream);
+    void addVideoData(AVPacket *video_pkt);
     
     /**
      * 追加音频数据至混流器
      */
-    void addAudioData(AVPacket *audio_pkt, AVStream *audio_stream);
+    void addAudioData(AVPacket *audio_pkt);
     
     /**
      * 释放混流器
