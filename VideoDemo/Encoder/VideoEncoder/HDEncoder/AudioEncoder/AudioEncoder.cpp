@@ -101,46 +101,6 @@ int AudioEncoder::malloc_audio_stream() {
     return ret;
 }
 
-int AudioEncoder::malloc_audio_pFrame() {
-    audio_frame = av_frame_alloc();
-    audio_frame->nb_samples = avAudioCtx->frame_size;
-    audio_frame->format = avAudioCtx->sample_fmt;
-    audio_frame->channels = avAudioCtx->channels;
-    audio_frame->channel_layout = avAudioCtx->channel_layout;
-    audio_frame->sample_rate = avAudioCtx->sample_rate;
-    
-    // 得到音频采样数据缓冲区大小
-    this->buffer_size = av_samples_get_buffer_size(NULL, av_get_channel_layout_nb_channels(audio_frame->channel_layout),audio_frame->nb_samples, (AVSampleFormat)audio_frame->format, 0);
-    // 创建缓冲区--存储音频采样数据--一帧数据
-    pcm_samples = (uint8_t *)av_malloc(this->buffer_size);
-    if (!pcm_samples) {
-        LOGI("Could not allocate %d bytes for samples buffer\n", buffer_size);
-        return -2;
-    }
-    printf("创建缓冲一帧数据大小 %d\n",this->buffer_size);
-    ret = avcodec_fill_audio_frame(audio_frame, av_get_channel_layout_nb_channels(audio_frame->channel_layout), (AVSampleFormat)audio_frame->format, this->pcm_samples, this->buffer_size, 0);
-    if (ret < 0) {
-        LOGI("Could not setup audio frame reason = %s\n",av_err2str(ret));
-        return -1;
-    }
-    
-    audio_stream->codecpar->codec_tag = 0;
-    audio_stream->time_base = audio_stream->codec->time_base;
-    //从编码器复制参数
-    avcodec_parameters_from_context(audio_stream->codecpar, avAudioCtx);
-    
-    if (this->isNeedWriteLocal) {
-        // 写文件头
-        if (avformat_write_header(avFormatCtx, NULL) < 0) {
-            this->writeHeaderSeccess = false;
-            printf("文件头写入失败");
-            return -1;
-        }
-    }
-    
-    return 0;
-}
-
 // 打开输出文件
 int AudioEncoder::openOutputFile() {
     int ret = 0;
@@ -197,6 +157,50 @@ int AudioEncoder::find_audio_codec() {
     if (avcodec_open2(avAudioCtx, audio_codec, NULL) < 0) {
         printf("打开编码器失败");
         return -1;
+    }
+    
+    //Show some Information
+    av_dump_format(avFormatCtx, 0, this->aacFilePath, 1);
+    
+    return 0;
+}
+
+int AudioEncoder::malloc_audio_pFrame() {
+    audio_frame = av_frame_alloc();
+    audio_frame->nb_samples = avAudioCtx->frame_size;
+    audio_frame->format = avAudioCtx->sample_fmt;
+    audio_frame->channels = avAudioCtx->channels;
+    audio_frame->channel_layout = avAudioCtx->channel_layout;
+    audio_frame->sample_rate = avAudioCtx->sample_rate;
+    
+    // 得到音频采样数据缓冲区大小
+    this->buffer_size = av_samples_get_buffer_size(NULL, av_get_channel_layout_nb_channels(audio_frame->channel_layout),audio_frame->nb_samples, (AVSampleFormat)audio_frame->format, 0);
+    // 创建缓冲区--存储音频采样数据--一帧数据
+    pcm_samples = (uint8_t *)av_malloc(this->buffer_size);
+    if (!pcm_samples) {
+        LOGI("Could not allocate %d bytes for samples buffer\n", buffer_size);
+        return -2;
+    }
+    printf("创建缓冲一帧数据大小 %d\n",this->buffer_size);
+    ret = avcodec_fill_audio_frame(audio_frame, av_get_channel_layout_nb_channels(audio_frame->channel_layout), (AVSampleFormat)audio_frame->format, this->pcm_samples, this->buffer_size, 0);
+    if (ret < 0) {
+        LOGI("Could not setup audio frame reason = %s\n",av_err2str(ret));
+        return -1;
+    }
+    
+    audio_stream->codecpar->codec_tag = 0;
+    audio_stream->time_base = audio_stream->codec->time_base;
+    //从编码器复制参数
+    avcodec_parameters_from_context(audio_stream->codecpar, avAudioCtx);
+    avcodec_parameters_to_context(audio_stream->codec, audio_stream->codecpar);
+    
+    if (this->isNeedWriteLocal) {
+        // 写文件头
+        if (avformat_write_header(avFormatCtx, NULL) < 0) {
+            this->writeHeaderSeccess = false;
+            printf("文件头写入失败");
+            return -1;
+        }
     }
     
     return 0;

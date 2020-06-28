@@ -57,7 +57,6 @@ void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(
         // 将视频压缩数据写入输出文件中
         packet->stream_index = video_stream->index;
         // 编码数据返回上层处理
-        printf("video Buff = %p data = %s\n",packet->buf,packet->data);
         VideoEncodeCallBack(packet);
         if (this->isNeedWriteLocal) {
             this->encode_result = av_write_frame(avFormatCtx, packet);
@@ -148,6 +147,7 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
     video_stream->time_base.num = 1;
     video_stream->codecpar->codec_tag = 0;
     video_stream->time_base = video_stream->codec->time_base;
+    video_stream->start_time = 0;
     
     // 获取编码器上下文
     pCodecCtx = avcodec_alloc_context3(pCodec);
@@ -217,6 +217,7 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
     
     //从编码器复制参数
     avcodec_parameters_from_context(video_stream->codecpar, pCodecCtx);
+    avcodec_parameters_to_context(video_stream->codec, video_stream->codecpar);
     
     // h264 编码配置
     AVDictionary *params = NULL;
