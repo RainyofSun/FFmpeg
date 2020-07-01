@@ -26,6 +26,10 @@
     return self;
 }
 
+- (void)dealloc {
+    NSLog(@"DEALLOC : %@",NSStringFromClass(self.class));
+}
+
 - (void)startCapture {
     OSStatus status = AudioQueueNewInput(&audioBaseDes, audioQueueInputCallBack, (__bridge void *_Nullable)(self), nil, nil, 0, &audioQueue);
     if (status != 0) {

@@ -40,7 +40,9 @@ bool LRVideoAudioMuxer::prepareForMux(const char *muxFilePath) {
 // 初始化视频/音频BitStreamFilter
 bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream, AVStream *audio_stream) {
     this->in_v_stream_time = video_stream->time_base;
-    this->in_a_stream_time = video_stream->time_base;
+    this->in_a_stream_time = audio_stream->time_base;
+    this->in_v_frame_rate  = video_stream->r_frame_rate;
+    this->in_a_frame_rate  = audio_stream->r_frame_rate;
     
     this->m_video_stream = avformat_new_stream(ofmt_ctx, video_stream->codec->codec);
     // 添加解码器属性
@@ -59,7 +61,7 @@ bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream,
         printf("Failed to copy context from input to output stream codec context\n");
         return false;
     }
-    
+    this->h264Ctx->time_base_in = video_stream->time_base;
     // 初始化过滤器上下文
     ret = av_bsf_init(this->h264Ctx);
     
@@ -77,7 +79,7 @@ bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream,
         printf("Failed to copy context from input to output stream codec context\n");
         return false;
     }
-    
+    this->aacCtx->time_base_in = audio_stream->time_base;
     // 初始化过滤器上下文
     ret = av_bsf_init(this->aacCtx);
     
@@ -98,7 +100,16 @@ bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream,
 // 追加视频数据
 void LRVideoAudioMuxer::addVideoData(AVPacket *video_pkt) {
     pthread_mutex_lock(&m_muxLock);
-    printf("add video Buff = %p data = %s\n",video_pkt->buf,video_pkt->data);
+//    printf("add video Buff = %p data = %s\n",video_pkt->buf,video_pkt->data);
+    if (video_pkt->pts == AV_NOPTS_VALUE) {
+        int64_t calc_durtion = (double)AV_TIME_BASE/av_q2d(this->in_v_frame_rate);
+        video_pkt->pts = (double)(this->frame_index * calc_durtion)/(double)(av_q2d(this->m_video_stream->time_base) * AV_TIME_BASE);
+        video_pkt->dts = video_pkt->pts;
+        video_pkt->duration = (double)calc_durtion/(double)(av_q2d(this->in_v_stream_time) * AV_TIME_BASE);
+        this->frame_index ++;
+    }
+    this->cur_pts_v = video_pkt->pts;
+    printf("add video pts = %lld\n",video_pkt->pts);
     
     LRMediaList item = {0};
     memset(&item, 0, sizeof(LRMediaList));
@@ -120,7 +131,18 @@ void LRVideoAudioMuxer::addVideoData(AVPacket *video_pkt) {
 // 追加音频数据
 void LRVideoAudioMuxer::addAudioData(AVPacket *audio_pkt) {
     pthread_mutex_lock(&m_muxLock);
-    printf("add audio Buff = %p data = %s\n",audio_pkt->buf,audio_pkt->data);
+//    printf("add audio Buff = %p data = %s\n",audio_pkt->buf,audio_pkt->data);
+    
+    if (audio_pkt->pts == AV_NOPTS_VALUE) {
+        int64_t calc_durtion = (double)AV_TIME_BASE/av_q2d(this->in_a_frame_rate);
+        audio_pkt->pts = (double)(this->frame_index * calc_durtion)/(double)(av_q2d(this->m_audio_stream->time_base) * AV_TIME_BASE);
+        audio_pkt->dts = audio_pkt->pts;
+        audio_pkt->duration = (double)calc_durtion/(double)(av_q2d(this->in_a_stream_time) * AV_TIME_BASE);
+        this->frame_index ++;
+    }
+    this->cur_pts_a = audio_pkt->pts;
+    printf("add audio pts = %lld\n",audio_pkt->pts);
+    
     LRMediaList item = {0};
     memset(&item, 0, sizeof(LRMediaList));
     item.pkt_data = audio_pkt;
@@ -140,18 +162,19 @@ void LRVideoAudioMuxer::addAudioData(AVPacket *audio_pkt) {
 
 // 销毁混流器
 void LRVideoAudioMuxer::freeMuxHander() {
-    printf("mux 开始析构");
+    printf("mux 开始析构\n");
     if (this->hasFilePath) {
         // 写文件尾
         if (this->writeHeaderSeccess) {
             int ret = av_write_trailer(this->ofmt_ctx);
-            printf("sss");
+            if (ret < 0) {
+                printf("文件尾写入失败\n");
+            }
         }
     }
     av_free(this->m_video_stream);
     av_free(this->m_audio_stream);
     avio_close(this->ofmt_ctx->pb);
-    avformat_free_context(this->ofmt_ctx);
     av_bsf_free(&this->h264Ctx);
     av_bsf_free(&this->aacCtx);
     this->m_videoListPacket.flush();
@@ -193,6 +216,8 @@ void LRVideoAudioMuxer::initGlobalVar() {
     this->hasFilePath = strlen(this->muxFilePath) != 0;
     this->writeHeaderSeccess = true;
     this->frame_index  = 0;
+    this->cur_pts_v    = 0;
+    this->cur_pts_a    = 0;
     
     this->m_audioListPacket.initPacketList();
     this->m_videoListPacket.initPacketList();
@@ -253,113 +278,65 @@ void LRVideoAudioMuxer::dispatchAVData() {
         if(video_packt.timeStamp == 0) {
             this->m_videoListPacket.popData(&video_packt);
         }
-        
-        if (audio_packt.timeStamp >= video_packt.timeStamp) {
-            printf("video Buff = %p",video_packt.pkt_data->buf);
-            if (video_packt.pkt_data != NULL && video_packt.pkt_data->buf != NULL) {
-                
-                if (av_bsf_send_packet(this->h264Ctx, video_packt.pkt_data) < 0) {
-                    av_free(video_packt.pkt_data->data);
-                    av_free(video_packt.pkt_data);
-                    continue;
-                }
-                
-                AVPacket *pkt = av_packet_alloc();
-                
-                while (AVERROR_EOF != av_bsf_receive_packet(this->h264Ctx, pkt)) {
-//                    if (pkt->pts == AV_NOPTS_VALUE) {
-//                        int64_t calc_durtion = (double)AV_TIME_BASE/av_q2d(this->m_video_stream->r_frame_rate);
-//                        pkt->pts = (double)(this->frame_index * calc_durtion)/(double)(av_q2d(this->m_video_stream->time_base) * AV_TIME_BASE);
-//                        this->frame_index ++;
-//                    }
-//                    pkt->pts = av_rescale_q_rnd(pkt->pts, this->in_v_stream_time, this->m_video_stream->time_base, AV_ROUND_INF);
-//                    pkt->dts = av_rescale_q_rnd(pkt->dts, this->in_v_stream_time, this->m_video_stream->time_base,AV_ROUND_NEAR_INF);
-//                    pkt->duration = av_rescale_q(pkt->duration, this->in_v_stream_time, this->m_video_stream->time_base);
-//                    pkt->pos = -1;
-//                    pkt->stream_index = this->m_video_stream->index;
-//                    this->productAVPacket(pkt);
-                }
-                av_free(video_packt.pkt_data->data);
+        AVPacket *pkt = av_packet_alloc();
+        // 比较音视频pts，大于0表示视频帧在前，音频需要连续编码。小于0表示，音频帧在前，应该至少编码一帧视频
+        int ret = av_compare_ts(this->cur_pts_v, this->in_v_stream_time, this->cur_pts_a, this->in_a_stream_time);
+        printf("时间戳比较 ret = %d\n",ret);
+        if (ret <= 0) {
+            printf("video Buff = %p pts = %lld\n",video_packt.pkt_data->buf,video_packt.pkt_data->pts);
+            if (av_bsf_send_packet(this->h264Ctx, video_packt.pkt_data) < 0) {
                 av_free(video_packt.pkt_data);
+                continue;
             }
+            ret = av_bsf_receive_packet(this->h264Ctx, pkt);
+            if (ret < 0) {
+                av_free(video_packt.pkt_data);
+                av_packet_unref(pkt);
+                video_packt.timeStamp = 0;
+                continue;
+            }
+            pkt->pts = av_rescale_q_rnd(pkt->pts, this->in_v_stream_time, this->m_video_stream->time_base, (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+            pkt->dts = av_rescale_q_rnd(pkt->dts, this->in_v_stream_time, this->m_video_stream->time_base,(AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+            pkt->duration = av_rescale_q(pkt->duration, this->in_v_stream_time, this->m_video_stream->time_base);
+            pkt->pos = -1;
+            pkt->stream_index = this->m_video_stream->index;
+            this->productAVPacket(pkt);
+            av_free(video_packt.pkt_data->data);
+            av_free(video_packt.pkt_data);
             video_packt.timeStamp = 0;
         } else {
-            printf("audio Buff = %p data = %s\n",audio_packt.pkt_data->buf,audio_packt.pkt_data->data);
-            if (audio_packt.pkt_data != NULL && audio_packt.pkt_data->buf != NULL) {
-                if (av_bsf_send_packet(this->aacCtx, audio_packt.pkt_data) < 0) {
-                    av_free(audio_packt.pkt_data->data);
-                    av_free(audio_packt.pkt_data);
-                    continue;
-                }
-                
-                AVPacket *pkt = av_packet_alloc();
-                
-                while (AVERROR_EOF != av_bsf_receive_packet(this->aacCtx, pkt)) {
-//                    if (pkt->pts == AV_NOPTS_VALUE) {
-//                        int64_t calc_durtion = (double)AV_TIME_BASE/av_q2d(this->m_audio_stream->r_frame_rate);
-//                        pkt->pts = (double)(this->frame_index * calc_durtion)/(double)(av_q2d(this->m_audio_stream->time_base) * AV_TIME_BASE);
-//                        this->frame_index ++;
-//                    }
-//                    pkt->pts = av_rescale_q_rnd(pkt->pts, this->in_a_stream_time, this->m_audio_stream->time_base, AV_ROUND_INF);
-//                    pkt->dts = av_rescale_q_rnd(pkt->dts, this->in_a_stream_time, this->m_audio_stream->time_base,AV_ROUND_NEAR_INF);
-//                    pkt->duration = av_rescale_q(pkt->duration, this->in_a_stream_time, this->m_audio_stream->time_base);
-//                    pkt->pos = -1;
-//                    pkt->stream_index = this->m_audio_stream->index;
-                    this->productAVPacket(pkt);
-                }
-                av_free(video_packt.pkt_data->data);
-                av_free(video_packt.pkt_data);
+            printf("audio Buff = %p pts = %lld\n",audio_packt.pkt_data->buf,audio_packt.pkt_data->pts);
+            if (av_bsf_send_packet(this->aacCtx, audio_packt.pkt_data) < 0) {
+                av_free(audio_packt.pkt_data);
+                continue;
             }
+            ret = av_bsf_receive_packet(this->aacCtx, pkt);
+            if (ret < 0) {
+                av_free(audio_packt.pkt_data);
+                av_packet_unref(pkt);
+                audio_packt.timeStamp = 0;
+                continue;
+            }
+            pkt->pts = av_rescale_q_rnd(pkt->pts, this->in_a_stream_time, this->m_audio_stream->time_base, (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+            pkt->dts = av_rescale_q_rnd(pkt->dts, this->in_a_stream_time, this->m_audio_stream->time_base,(AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+            pkt->duration = av_rescale_q(pkt->duration, this->in_a_stream_time, this->m_audio_stream->time_base);
+            pkt->pos = -1;
+            pkt->stream_index = this->m_audio_stream->index;
+            this->productAVPacket(pkt);
+            av_free(audio_packt.pkt_data->data);
+            av_free(audio_packt.pkt_data);
             audio_packt.timeStamp = 0;
         }
-//        av_bitstream_filter_filter(this->h264bsfc, this->m_video_stream->codec, NULL, &video_packt.pkt_data->data, &video_packt.pkt_data->size, video_packt.pkt_data->data, video_packt.pkt_data->size, 0);
-//        av_bitstream_filter_filter(this->aacbsfc, this->m_audio_stream->codec, NULL, &audio_packt.pkt_data->data, &audio_packt.pkt_data->size, audio_packt.pkt_data->data, audio_packt.pkt_data->size, 0);
     }
 }
 
 void LRVideoAudioMuxer::productAVPacket(AVPacket *mux_packet) {
-    
-    uint8_t *output       = NULL;
-    int     len           = 0;
-    int     ret           = 0;
-    
-//    ret = av_write_frame(this->ofmt_ctx, mux_packet);
-//    if (ret < 0) {
-//        printf("写入文件失败\n");
-//    }
-//
-//    av_packet_unref(mux_packet);
-//
-//    return;
-    
-    ret = avio_open_dyn_buf(&this->ofmt_ctx->pb);
+
+    int ret = av_write_frame(this->ofmt_ctx, mux_packet);
     if (ret < 0) {
-        return;
+        printf("写入文件失败\n");
     }
-    
-    ret = av_write_frame(this->ofmt_ctx, mux_packet);
-    
-    if (ret < 0) {
-        avio_close_dyn_buf(this->ofmt_ctx->pb, (uint8_t **)(&output));
-        if (output != NULL) {
-            free(output);
-        }
-        log4cplus_error(kModuleName, "%s: Error writing output data",__func__);
-        return;
-    }
-    
-    len = avio_close_dyn_buf(this->ofmt_ctx->pb, (uint8_t **)(&output));
-    if (len == 0 || output == NULL) {
-        log4cplus_debug(kModuleName, "%s: mux len:%d or data abnormal",__func__,len);
-        if(output != NULL) {
-            av_free(output);
-        }
-        return;
-    }
-    
-    if (output != NULL) {
-        av_free(output);
-    }
+
     av_packet_unref(mux_packet);
 }
 

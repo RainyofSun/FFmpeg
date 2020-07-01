@@ -16,7 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol VideoEncoderDelegate <NSObject>
 
 - (void)videoEncodecData:(AVPacket *)videoPacket;
-- (void)encodeVideoStream:(AVStream *)videoStream;
 
 @end
 
@@ -28,6 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithVideoEncoderConfig:(LRImageCameraConfig *)config videoDelegate:(id<VideoEncoderDelegate>)videoDelegate;
 - (void)H264VideoEncoderWithSampleBuffer:(CMSampleBufferRef)sampleBuffer;
 - (void)AACAudioEncoderWithSampleBuffer:(CMSampleBufferRef)sampleBuffer;
+- (AVStream *)videoEncodeStreaam;
+- (void)stopVideoEncode;
 
 @end
 

@@ -31,18 +31,12 @@ static LRVideoH264HDEncoder *encoder = nil;
         if (!_isSucess) {
             NSLog(@"创建Video编码器失败");
         }
-        if (self.videoDelegate != nil && [self.videoDelegate respondsToSelector:@selector(encodeVideoStream:)]) {
-            [self.videoDelegate encodeVideoStream:_videoEncoder.video_stream];
-        }
     }
     return self;
 }
 
 - (void)dealloc {
-    if (_isSucess) {
-        _videoEncoder.freeEncoder();
-    }
-    NSLog(@"DELLOC %@",NSStringFromClass(self.class));
+    NSLog(@"DEALLOC %@",NSStringFromClass(self.class));
 }
 
 - (void)H264VideoEncoderWithSampleBuffer:(CMSampleBufferRef)sampleBuffer {
@@ -80,6 +74,17 @@ static LRVideoH264HDEncoder *encoder = nil;
         NSData *tempData = [NSData dataWithBytesNoCopy:audioData length:audioSize];
         NSLog(@"data %@",tempData);
     CFRelease(blockBuffer);
+}
+
+- (AVStream *)videoEncodeStreaam {
+    return _videoEncoder.video_stream;
+}
+
+- (void)stopVideoEncode {
+    if (_isSucess) {
+        self->_videoEncoder.freeEncoder();
+    }
+    encoder = nil;
 }
 
 #pragma mark - private methods

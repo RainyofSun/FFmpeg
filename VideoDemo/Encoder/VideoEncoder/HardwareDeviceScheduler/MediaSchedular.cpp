@@ -49,6 +49,16 @@ int MediaSchedular::prepareEncoder(CaptureParameters parameters) {
         return -1;
     }
     this->create_audio_encoder = true;
+    if (this->video_encoder.video_stream && this->audio_encoder.audio_stream) {
+        success = this->mux_Hander.prepareForMux(this->save_mux_mp4_file_path);
+        if (success) {
+            success = this->mux_Hander.initializationMuxBitStreamFilter(this->video_encoder.video_stream, this->audio_encoder.audio_stream);
+            this->create_mux_hander = success;
+            return success ? 0 : -1;
+        } else {
+            return -1;
+        }
+    }
     return 0;
 }
 
@@ -76,13 +86,18 @@ int MediaSchedular::freeEncoder() {
         this->audio_encoder.freeAACEncode();
         printf("FREE AUDIO ENCODER\n");
     }
+    if (this->create_mux_hander) {
+        this->mux_Hander.freeMuxHander();
+        printf("FREE MUX HANDER\n");
+    }
     return 0;
 }
 
 // 文件存放地址-->分步调试使用
-void MediaSchedular::captureFilePath(const char *vidoe_file_path, const char *audio_file_path) {
+void MediaSchedular::captureFilePath(const char *vidoe_file_path, const char *audio_file_path, const char *mp4_file_path) {
     this->save_video_file_path = vidoe_file_path;
     this->save_audio_file_path = audio_file_path;
+    this->save_mux_mp4_file_path = mp4_file_path;
 }
 
 #pragma mark - private metods

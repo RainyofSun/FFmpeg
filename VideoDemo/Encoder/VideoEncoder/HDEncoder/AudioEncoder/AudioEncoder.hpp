@@ -27,7 +27,7 @@ private:
     int                 channels;
     int                 buffer_size;
     int                 samplesCursor;
-    int                 frame_current,i,ret;
+    int                 frame_current,ret;
     uint8_t             *pcm_samples;
     bool                writeHeaderSeccess;
     bool                isNeedWriteLocal;

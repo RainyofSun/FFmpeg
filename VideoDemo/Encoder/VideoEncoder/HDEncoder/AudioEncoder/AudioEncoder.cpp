@@ -51,11 +51,11 @@ int AudioEncoder::aacEncode(uint8_t *buffer, int size, void *(*AudioEncoderCallB
 
 void AudioEncoder::freeAACEncode() {
     printf("开始析构\n");
-    this->ret = this->flush_encoder();
-    if (this->ret < 0) {
-        printf("Flushing encoder failed\n");
-        return;
-    }
+//    this->ret = this->flush_encoder();
+//    if (this->ret < 0) {
+//        printf("Flushing encoder failed\n");
+//        return;
+//    }
     
     if (this->isNeedWriteLocal) {
         // 写文件尾
@@ -67,6 +67,7 @@ void AudioEncoder::freeAACEncode() {
     avcodec_close(avAudioCtx);
     av_free(audio_stream);
     avio_close(avFormatCtx->pb);
+    printf("audio Codec Dealloc\n");
 }
 
 #pragma mark - private methods
@@ -126,6 +127,11 @@ int AudioEncoder::find_audio_codec() {
     
     // 创建输出码流--创建一块内存空间--这里不知道是什么类型的流
     audio_stream = avformat_new_stream(avFormatCtx, audio_codec);
+    audio_stream->time_base.num = 1;
+    audio_stream->time_base.den = sample_rate;
+    // 实际帧率
+    audio_stream->r_frame_rate.num = sample_rate;
+    audio_stream->r_frame_rate.den = 1;
     
     // 获取编码器上下文
 //    avAudioCtx = this->audio_stream->codec;
@@ -210,9 +216,7 @@ int AudioEncoder::malloc_audio_pFrame() {
 int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *)) {
     // 设置采样数据格式
     audio_frame->data[0] = this->pcm_samples;
-    audio_frame->pts = i * 100;
-    
-    i ++;
+    audio_frame->pts = frame_current;
     
     // 编码一帧音频采样数据--得到一帧音频压缩数据--aac
     // 发送一帧音频数据
@@ -227,10 +231,16 @@ int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *)) {
     memset(audio_packet, 0, sizeof(AVPacket));
     ret = avcodec_receive_packet(avAudioCtx, audio_packet);
     if (ret == 0) {
-        // 编码后的音频流写入文件
-        printf("当前编码到第 %d帧\n",frame_current);
         frame_current ++;
+        // 编码后的音频流写入文件
         audio_packet->stream_index = audio_stream->index;
+        audio_packet->pts = frame_current*audio_frame->nb_samples;
+        // 用于将AVPacket中各种时间值从一种时间基转换为另一种时间基
+        av_packet_rescale_ts(audio_packet, avAudioCtx->time_base, audio_stream->time_base);
+        audio_packet->dts = audio_packet->pts;
+//        frame_current += av_rescale_q(audio_frame->nb_samples, {1,avAudioCtx->sample_rate}, avAudioCtx->time_base);// pts 自增1024 有疑问？
+        printf("当前编码到第 %d帧 audio pts = %lld\n",frame_current,audio_packet->pts);
+        audio_packet->pos = -1;
         // 编码数据返回上层处理
         AudioEncoderCallBack(audio_packet);
         if (this->isNeedWriteLocal) {

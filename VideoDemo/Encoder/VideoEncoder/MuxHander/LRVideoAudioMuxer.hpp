@@ -33,11 +33,15 @@ private:
     /** time base */
     AVRational          in_v_stream_time;
     AVRational          in_a_stream_time;
+    AVRational          in_v_frame_rate;
+    AVRational          in_a_frame_rate;
     
     const char *muxFilePath;
     bool hasFilePath;
     bool writeHeaderSeccess;
     int  frame_index;
+    int64_t  cur_pts_v;
+    int64_t  cur_pts_a;
     
     pthread_t           m_muxThread;
     pthread_mutex_t     m_muxLock;

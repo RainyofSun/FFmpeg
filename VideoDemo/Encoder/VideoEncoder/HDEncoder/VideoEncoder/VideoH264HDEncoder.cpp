@@ -42,6 +42,8 @@ void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(
     pFrame->data[2] = buffer.v_frame;   // V
     // PTS/时间戳
     pFrame->pts = frameCounter;
+    // 非压缩时候的数据（即YUV或者其它），在ffmpeg中对应的结构体为AVFrame,它的时间基为AVCodecContext 的time_base
+    // 压缩后的数据（对应的结构体为AVPacket）对应的时间基为AVStream的time_base
     
     // 发送一帧视频像素数据
     avcodec_send_frame(pCodecCtx, pFrame);
@@ -56,28 +58,32 @@ void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(
         frameCounter ++;
         // 将视频压缩数据写入输出文件中
         packet->stream_index = video_stream->index;
+//        packet->pts = frameCounter;
+        // 用于将AVPacket中各种时间值从一种时间基转换为另一种时间基
+        av_packet_rescale_ts(packet, pCodecCtx->time_base, video_stream->time_base);
+        packet->pos = -1;
+        printf("当前编码到第 %d帧  video pts = %lld\n",frameCounter,packet->pts);
         // 编码数据返回上层处理
         VideoEncodeCallBack(packet);
         if (this->isNeedWriteLocal) {
             this->encode_result = av_write_frame(avFormatCtx, packet);
-            printf("Successed to encode frame: %5d\tsize:%5d\n",frameCounter,packet->size);
+//            printf("Successed to encode frame: %5d\tsize:%5d\n",frameCounter,packet->size);
             if (this->encode_result < 0) {
                 printf("输出一帧数据失败\n");
                 return;
             }
         }
-//        av_packet_unref(packet);
     }
 }
 
 // 销毁编码器
 void VideoH264HDEncoder::freeEncoder() {
     printf("开始析构\n");
-    this->encode_result = this->flush_encoder();
-    if (this->encode_result < 0) {
-        printf("Flushing encoder failed\n");
-        return;
-    }
+//    this->encode_result = this->flush_encoder();
+//    if (this->encode_result < 0) {
+//        printf("Flushing encoder failed\n");
+//        return;
+//    }
     
     if (this->isNeedWriteLocal) {
         // 写文件尾
@@ -92,7 +98,7 @@ void VideoH264HDEncoder::freeEncoder() {
     avformat_free_context(avFormatCtx);
     pCodecCtx = NULL;
     pFrame = NULL;
-    printf("Codec Dealloc\n");
+    printf("video Codec Dealloc\n");
 }
 
 #pragma mark - private methods
@@ -145,8 +151,10 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
     video_stream = avformat_new_stream(avFormatCtx, NULL);
     video_stream->time_base.den = frameRate;
     video_stream->time_base.num = 1;
+    // 实际帧率
+    video_stream->r_frame_rate.den = 1;
+    video_stream->r_frame_rate.num = frameRate;
     video_stream->codecpar->codec_tag = 0;
-    video_stream->time_base = video_stream->codec->time_base;
     video_stream->start_time = 0;
     
     // 获取编码器上下文
@@ -254,7 +262,7 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
 void VideoH264HDEncoder::initializationAVFrame(void) {
     // 定义一个缓冲区 缓存一帧视频像素数据 获取缓存区大小
     pictureSize = avpicture_get_size(pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height);
-    // 开辟内存空间
+    // AVFrame开辟内存空间 时间基基于AVCodecContext
     pFrame = av_frame_alloc();
     pFrame->format = pCodecCtx->pix_fmt;
     pFrame->width = pCodecCtx->width;
@@ -267,7 +275,7 @@ void VideoH264HDEncoder::initializationAVFrame(void) {
     // 颜色空间
     pFrame->color_range = AVCOL_RANGE_MPEG;
     pFrame->pkt_duration = 0;
-
+    
     // 设置缓冲区和AVFrame类型保持一致
     avpicture_fill((AVPicture *)pFrame, NULL, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height);
 //    av_image_fill_arrays(pFrame->data, pFrame->linesize, this->out_buffer, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height, 0);

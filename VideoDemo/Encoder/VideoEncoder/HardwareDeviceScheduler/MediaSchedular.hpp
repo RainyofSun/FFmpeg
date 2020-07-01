@@ -13,7 +13,7 @@
 #include "EncoderHeader.h"
 #include "VideoH264HDEncoder.hpp"
 #include "AudioEncoder.hpp"
-#include "LRVideoAudioMuxHander.hpp"
+#include "LRVideoAudioMuxer.hpp"
 #include "NV12ToYUV420P.hpp"
 
 typedef struct {
@@ -42,10 +42,11 @@ private:
     VideoH264HDEncoder      video_encoder;
     AudioEncoder            audio_encoder;
     NV12ToYUV420P           pixel_convert;
-    LRVideoAudioMuxHander   mux_Hander;
+    LRVideoAudioMuxer       mux_Hander;
     
     const char *save_video_file_path;
     const char *save_audio_file_path;
+    const char *save_mux_mp4_file_path;
     bool        create_video_encoder;
     bool        create_audio_encoder;
     bool        create_mux_hander;
@@ -105,7 +106,7 @@ public:
     /**
      * 文件存放地址-->分步调试使用
      */
-    void captureFilePath(const char *vidoe_file_path,const char *audio_file_path);
+    void captureFilePath(const char *vidoe_file_path,const char *audio_file_path,const char *mp4_file_path);
 };
 
 #endif /* MediaSchedular_hpp */

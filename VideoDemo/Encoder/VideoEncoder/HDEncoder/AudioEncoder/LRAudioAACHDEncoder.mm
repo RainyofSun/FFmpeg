@@ -29,22 +29,27 @@ static LRAudioAACHDEncoder *audioEncode = nil;
         if (!_isSucess) {
             NSLog(@"创建Audio编码器失败");
         }
-        if (self.audioDelegate != nil && [self.audioDelegate respondsToSelector:@selector(encodeAudioStream:)]) {
-            [self.audioDelegate encodeAudioStream:_audioEncoder.audio_stream];
-        }
     }
     return self;
 }
 
 - (void)dealloc {
-    if (_isSucess) {
-        _audioEncoder.freeAACEncode();
-    }
-    NSLog(@"DELLOC %@",NSStringFromClass(self.class));
+    NSLog(@"DEALLOC %@",NSStringFromClass(self.class));
 }
 
 - (void)AACAudioEncoderWithBytes:(uint8_t *)audioData dataLength:(int)length {
     _audioEncoder.aacEncode(audioData, length,AudioEncdeorCallBack);
+}
+
+- (AVStream *)encodeAudioStream {
+    return _audioEncoder.audio_stream;
+}
+
+- (void)stopAudioEncoder {
+    if (_isSucess) {
+        _audioEncoder.freeAACEncode();
+    }
+    audioEncode = nil;
 }
 
 #pragma mark - private methods
