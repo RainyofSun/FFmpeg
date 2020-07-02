@@ -4,10 +4,11 @@
 //
 //  Created by EGLS_BMAC on 2020/6/22.
 //  Copyright © 2020 EGLS_BMAC. All rights reserved.
-//  TODO:
-//  1.检查Mux内内存的释放
-//  2.整理mux代码
-//  3.检查Video_stream Audio_stream参数 --> mux内文件头写入失败
+/*
+ tbn：对应容器中的时间基。值是AVStream.time_base的倒数
+ tbc：对应编解码器中的时间基。值是AVCodecContext.time_base的倒数
+ tbr：从视频流中猜算得到，可能是帧率或场率(帧率的2倍)
+ */
 
 #include "LRVideoAudioMuxer.hpp"
 #include "unistd.h"
@@ -45,6 +46,7 @@ bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream,
     this->in_a_frame_rate  = audio_stream->r_frame_rate;
     
     this->m_video_stream = avformat_new_stream(ofmt_ctx, video_stream->codec->codec);
+    this->m_video_stream->time_base = video_stream->time_base;
     // 添加解码器属性
     int ret = 0;
     
@@ -66,6 +68,7 @@ bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream,
     ret = av_bsf_init(this->h264Ctx);
     
     this->m_audio_stream = avformat_new_stream(ofmt_ctx, audio_stream->codec->codec);
+    this->m_audio_stream->time_base = audio_stream->time_base;
     // 添加解码器属性
     ret = avcodec_parameters_copy(this->aacCtx->par_in, audio_stream->codecpar);
     
@@ -108,6 +111,8 @@ void LRVideoAudioMuxer::addVideoData(AVPacket *video_pkt) {
         video_pkt->duration = (double)calc_durtion/(double)(av_q2d(this->in_v_stream_time) * AV_TIME_BASE);
         this->frame_index ++;
     }
+    // 以音频为准，将视频的时间基转为音频的时间基进行时间比较
+//    av_packet_rescale_ts(video_pkt, this->in_v_stream_time, this->in_a_stream_time);
     this->cur_pts_v = video_pkt->pts;
     printf("add video pts = %lld\n",video_pkt->pts);
     

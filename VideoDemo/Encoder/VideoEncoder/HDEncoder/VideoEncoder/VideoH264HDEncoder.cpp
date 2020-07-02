@@ -42,8 +42,6 @@ void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(
     pFrame->data[2] = buffer.v_frame;   // V
     // PTS/时间戳
     pFrame->pts = frameCounter;
-    // 非压缩时候的数据（即YUV或者其它），在ffmpeg中对应的结构体为AVFrame,它的时间基为AVCodecContext 的time_base
-    // 压缩后的数据（对应的结构体为AVPacket）对应的时间基为AVStream的time_base
     
     // 发送一帧视频像素数据
     avcodec_send_frame(pCodecCtx, pFrame);
@@ -59,6 +57,8 @@ void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(
         // 将视频压缩数据写入输出文件中
         packet->stream_index = video_stream->index;
 //        packet->pts = frameCounter;
+        // 非压缩时候的数据（即YUV或者其它），在ffmpeg中对应的结构体为AVFrame,它的时间基为AVCodecContext 的time_base
+        // 压缩后的数据（对应的结构体为AVPacket）对应的时间基为AVStream的time_base
         // 用于将AVPacket中各种时间值从一种时间基转换为另一种时间基
         av_packet_rescale_ts(packet, pCodecCtx->time_base, video_stream->time_base);
         packet->pos = -1;
@@ -148,7 +148,7 @@ int VideoH264HDEncoder::initializationCodexCtx(int width, int height,int frameRa
         return ret;
     }
     // 创建输出码流
-    video_stream = avformat_new_stream(avFormatCtx, NULL);
+    video_stream = avformat_new_stream(avFormatCtx, pCodec);
     video_stream->time_base.den = frameRate;
     video_stream->time_base.num = 1;
     // 实际帧率

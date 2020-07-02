@@ -235,6 +235,8 @@ int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *)) {
         // 编码后的音频流写入文件
         audio_packet->stream_index = audio_stream->index;
         audio_packet->pts = frame_current*audio_frame->nb_samples;
+        // 非压缩时候的数据（即YUV或者其它），在ffmpeg中对应的结构体为AVFrame,它的时间基为AVCodecContext 的time_base
+        // 压缩后的数据（对应的结构体为AVPacket）对应的时间基为AVStream的time_base
         // 用于将AVPacket中各种时间值从一种时间基转换为另一种时间基
         av_packet_rescale_ts(audio_packet, avAudioCtx->time_base, audio_stream->time_base);
         audio_packet->dts = audio_packet->pts;
