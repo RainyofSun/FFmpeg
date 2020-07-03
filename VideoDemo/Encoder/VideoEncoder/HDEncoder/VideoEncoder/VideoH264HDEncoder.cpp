@@ -56,13 +56,13 @@ void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(
         frameCounter ++;
         // 将视频压缩数据写入输出文件中
         packet->stream_index = video_stream->index;
-//        packet->pts = frameCounter;
+        packet->duration = packet->pts * av_q2d(this->video_stream->time_base);
         // 非压缩时候的数据（即YUV或者其它），在ffmpeg中对应的结构体为AVFrame,它的时间基为AVCodecContext 的time_base
         // 压缩后的数据（对应的结构体为AVPacket）对应的时间基为AVStream的time_base
         // 用于将AVPacket中各种时间值从一种时间基转换为另一种时间基
         av_packet_rescale_ts(packet, pCodecCtx->time_base, video_stream->time_base);
         packet->pos = -1;
-        printf("当前编码到第 %d帧  video pts = %lld\n",frameCounter,packet->pts);
+        printf("视频编码到第 %d帧  video pts = %lld\n",frameCounter,packet->pts);
         // 编码数据返回上层处理
         VideoEncodeCallBack(packet);
         if (this->isNeedWriteLocal) {
@@ -272,7 +272,6 @@ void VideoH264HDEncoder::initializationAVFrame(void) {
     pFrame->sample_aspect_ratio.den = 9;
     // 颜色空间
     pFrame->color_range = AVCOL_RANGE_MPEG;
-    pFrame->pkt_duration = 0;
     
     // 设置缓冲区和AVFrame类型保持一致
     avpicture_fill((AVPicture *)pFrame, NULL, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height);

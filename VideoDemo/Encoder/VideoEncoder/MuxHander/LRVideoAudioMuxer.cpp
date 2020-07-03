@@ -110,7 +110,7 @@ void LRVideoAudioMuxer::addVideoData(AVPacket *video_pkt) {
 //    printf("add video Buff = %p data = %s\n",video_pkt->buf,video_pkt->data);
     if (video_pkt->pts == AV_NOPTS_VALUE) {
         int64_t calc_durtion = (double)AV_TIME_BASE/av_q2d(this->in_v_frame_rate);
-        video_pkt->pts = (double)(this->frame_index * calc_durtion)/(double)(av_q2d(this->m_video_stream->time_base) * AV_TIME_BASE);
+        video_pkt->pts = (double)(this->frame_index * calc_durtion)/(double)(av_q2d(this->in_v_stream_time) * AV_TIME_BASE);
         video_pkt->dts = video_pkt->pts;
         video_pkt->duration = (double)calc_durtion/(double)(av_q2d(this->in_v_stream_time) * AV_TIME_BASE);
         this->frame_index ++;
@@ -121,7 +121,7 @@ void LRVideoAudioMuxer::addVideoData(AVPacket *video_pkt) {
     memset(&item, 0, sizeof(LRMediaList));
     item.pkt_data = video_pkt;
     item.data_type = LRMuxVideoType;
-    item.timeStamp = video_pkt->pts;
+    item.timeStamp = video_pkt->pts + video_pkt->duration;
     
     bool is_success = this->m_videoListPacket.pushData(item);
     if (!is_success) {
@@ -141,7 +141,7 @@ void LRVideoAudioMuxer::addAudioData(AVPacket *audio_pkt) {
     
     if (audio_pkt->pts == AV_NOPTS_VALUE) {
         int64_t calc_durtion = (double)AV_TIME_BASE/av_q2d(this->in_a_frame_rate);
-        audio_pkt->pts = (double)(this->frame_index * calc_durtion)/(double)(av_q2d(this->m_audio_stream->time_base) * AV_TIME_BASE);
+        audio_pkt->pts = (double)(this->frame_index * calc_durtion)/(double)(av_q2d(this->in_a_stream_time) * AV_TIME_BASE);
         audio_pkt->dts = audio_pkt->pts;
         audio_pkt->duration = (double)calc_durtion/(double)(av_q2d(this->in_a_stream_time) * AV_TIME_BASE);
         this->frame_index ++;
@@ -152,7 +152,7 @@ void LRVideoAudioMuxer::addAudioData(AVPacket *audio_pkt) {
     memset(&item, 0, sizeof(LRMediaList));
     item.pkt_data = audio_pkt;
     item.data_type = LRMuxVideoType;
-    item.timeStamp = audio_pkt->pts;
+    item.timeStamp = audio_pkt->pts + audio_pkt->duration;
     
     bool is_success = this->m_audioListPacket.pushData(item);
     if (!is_success) {
