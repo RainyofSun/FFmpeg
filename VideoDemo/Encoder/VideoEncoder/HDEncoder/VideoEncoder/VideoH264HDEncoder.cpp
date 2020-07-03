@@ -270,8 +270,6 @@ void VideoH264HDEncoder::initializationAVFrame(void) {
     // 宽高比
     pFrame->sample_aspect_ratio.num = 16;
     pFrame->sample_aspect_ratio.den = 9;
-    // 时间戳
-    pFrame->pts = 0;
     // 颜色空间
     pFrame->color_range = AVCOL_RANGE_MPEG;
     pFrame->pkt_duration = 0;

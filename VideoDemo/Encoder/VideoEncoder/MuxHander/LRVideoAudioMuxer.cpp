@@ -46,7 +46,9 @@ bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream,
     this->in_a_frame_rate  = audio_stream->r_frame_rate;
     
     this->m_video_stream = avformat_new_stream(ofmt_ctx, video_stream->codec->codec);
-    this->m_video_stream->time_base = video_stream->time_base;
+    this->m_video_stream->time_base.num = 1;
+    this->m_video_stream->time_base.den = 24;
+    
     // 添加解码器属性
     int ret = 0;
     
@@ -68,7 +70,9 @@ bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream,
     ret = av_bsf_init(this->h264Ctx);
     
     this->m_audio_stream = avformat_new_stream(ofmt_ctx, audio_stream->codec->codec);
-    this->m_audio_stream->time_base = audio_stream->time_base;
+    this->m_audio_stream->time_base.num = 1;
+    this->m_audio_stream->time_base.den = audio_stream->codec->sample_rate;
+    
     // 添加解码器属性
     ret = avcodec_parameters_copy(this->aacCtx->par_in, audio_stream->codecpar);
     
@@ -111,9 +115,6 @@ void LRVideoAudioMuxer::addVideoData(AVPacket *video_pkt) {
         video_pkt->duration = (double)calc_durtion/(double)(av_q2d(this->in_v_stream_time) * AV_TIME_BASE);
         this->frame_index ++;
     }
-    // 以音频为准，将视频的时间基转为音频的时间基进行时间比较
-//    av_packet_rescale_ts(video_pkt, this->in_v_stream_time, this->in_a_stream_time);
-    this->cur_pts_v = video_pkt->pts;
     printf("add video pts = %lld\n",video_pkt->pts);
     
     LRMediaList item = {0};
@@ -145,7 +146,6 @@ void LRVideoAudioMuxer::addAudioData(AVPacket *audio_pkt) {
         audio_pkt->duration = (double)calc_durtion/(double)(av_q2d(this->in_a_stream_time) * AV_TIME_BASE);
         this->frame_index ++;
     }
-    this->cur_pts_a = audio_pkt->pts;
     printf("add audio pts = %lld\n",audio_pkt->pts);
     
     LRMediaList item = {0};
@@ -221,8 +221,6 @@ void LRVideoAudioMuxer::initGlobalVar() {
     this->hasFilePath = strlen(this->muxFilePath) != 0;
     this->writeHeaderSeccess = true;
     this->frame_index  = 0;
-    this->cur_pts_v    = 0;
-    this->cur_pts_a    = 0;
     
     this->m_audioListPacket.initPacketList();
     this->m_videoListPacket.initPacketList();
@@ -285,7 +283,7 @@ void LRVideoAudioMuxer::dispatchAVData() {
         }
         AVPacket *pkt = av_packet_alloc();
         // 比较音视频pts，大于0表示视频帧在前，音频需要连续编码。小于0表示，音频帧在前，应该至少编码一帧视频
-        int ret = av_compare_ts(this->cur_pts_v, this->in_v_stream_time, this->cur_pts_a, this->in_a_stream_time);
+        int ret = av_compare_ts(video_packt.timeStamp, this->in_v_stream_time, audio_packt.timeStamp, this->in_a_stream_time);
         printf("时间戳比较 ret = %d\n",ret);
         if (ret <= 0) {
             printf("video Buff = %p pts = %lld\n",video_packt.pkt_data->buf,video_packt.pkt_data->pts);

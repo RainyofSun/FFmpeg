@@ -69,8 +69,11 @@
     
     NSString *h263FilePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"h264test.264"];
     NSString *aacFilePath  = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"free_aduio.aac"];
+    const char *in_file_audio = "/Users/egls_bmac/Desktop/free_aduio.aac";
+    const char *in_file_video = "/Users/egls_bmac/Desktop/h264test.h264";
+    
     Mp4Synthesis *mp4Synthesis = new Mp4Synthesis;
-    mp4Synthesis->muxer_main([h263FilePath cStringUsingEncoding:NSUTF8StringEncoding], [aacFilePath cStringUsingEncoding:NSUTF8StringEncoding], [config.muxFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
+    mp4Synthesis->muxer_main(in_file_video, in_file_audio, [config.muxFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
     delete mp4Synthesis;
 }
 

@@ -40,8 +40,6 @@ private:
     bool hasFilePath;
     bool writeHeaderSeccess;
     int  frame_index;
-    int64_t  cur_pts_v;
-    int64_t  cur_pts_a;
     
     pthread_t           m_muxThread;
     pthread_mutex_t     m_muxLock;
