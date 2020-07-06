@@ -49,12 +49,11 @@
         self.audioEncoder = [[LRAudioAACHDEncoder alloc] initWithAudioEncoderConfig:config audioDelegate:self];
         self.videoCapture.cameraDelegate    = self;
         self.audioCapture.captureDelegate   = self;
-        mediaMuxHander.prepareForMux([config.muxFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
         self.videoStream = [self.videoEncoder videoEncodeStreaam];
         self.audioStream = [self.audioEncoder encodeAudioStream];
         self.isSuccess = YES;
         if (self.videoStream && self.audioStream) {
-            self.isSuccess = self->mediaMuxHander.initializationMuxBitStreamFilter(self.videoStream, self.audioStream);
+            self.isSuccess = mediaMuxHander.prepareForMux([config.muxFilePath cStringUsingEncoding:NSUTF8StringEncoding], self.videoStream, self.audioStream);
         }
         if (!self.isSuccess) {
             NSLog(@"混流器创建失败");

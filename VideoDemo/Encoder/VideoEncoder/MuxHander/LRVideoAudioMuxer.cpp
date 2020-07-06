@@ -16,89 +16,41 @@
 #define kModuleName "LRAVMux"
 
 // 准备混流
-bool LRVideoAudioMuxer::prepareForMux(const char *muxFilePath) {
+bool LRVideoAudioMuxer::prepareForMux(const char *muxFilePath, AVStream *video_stream, AVStream *audio_stream) {
 
     this->muxFilePath = muxFilePath;
     
     this->initCodec();
     this->initGlobalVar();
+    
     int ret = this->initBitStreamFilter();
     if (ret < 0) {
         return false;
     }
+    
     ret = this->configureFFmpegFormat();
     if (ret < 0) {
         return false;
     }
+    
     ret = pthread_create(&m_muxThread, NULL, MuxAVPacket,(void *)this);
     if (ret != 0) {
         log4cplus_error(kModuleName, "%s: create thread failed: %s",__func__, strerror(ret));
         return false;
     }
-    return true;
-}
-
-// 初始化视频/音频BitStreamFilter
-bool LRVideoAudioMuxer::initializationMuxBitStreamFilter(AVStream *video_stream, AVStream *audio_stream) {
-    this->in_v_stream_time = video_stream->time_base;
-    this->in_a_stream_time = audio_stream->time_base;
-    this->in_v_frame_rate  = video_stream->r_frame_rate;
-    this->in_a_frame_rate  = audio_stream->r_frame_rate;
     
-    this->m_video_stream = avformat_new_stream(ofmt_ctx, video_stream->codec->codec);
-    this->m_video_stream->time_base.num = 1;
-    this->m_video_stream->time_base.den = 24;
-    
-    // 添加解码器属性
-    int ret = 0;
-    
-    ret = avcodec_parameters_copy(this->h264Ctx->par_in, video_stream->codecpar);
-    if (!this->m_video_stream) {
-        printf("Failed allocating output stream\n");
-        return false;
-    }
-    
-    ret = avcodec_parameters_from_context(this->m_video_stream->codecpar, video_stream->codec);
-//    ret = avcodec_copy_context(m_video_stream->codec, video_stream->codec);
-    
+    ret = this->buildMuxVideoStream(video_stream);
     if (ret < 0) {
-        printf("Failed to copy context from input to output stream codec context\n");
         return false;
     }
-    this->h264Ctx->time_base_in = video_stream->time_base;
-    // 初始化过滤器上下文
-    ret = av_bsf_init(this->h264Ctx);
     
-    this->m_audio_stream = avformat_new_stream(ofmt_ctx, audio_stream->codec->codec);
-    this->m_audio_stream->time_base.num = 1;
-    this->m_audio_stream->time_base.den = audio_stream->codec->sample_rate;
-    
-    // 添加解码器属性
-    ret = avcodec_parameters_copy(this->aacCtx->par_in, audio_stream->codecpar);
-    
-    if (!this->m_audio_stream) {
-        printf("Failed allocating output stream\n");
-        return false;
-    }
-    ret = avcodec_parameters_from_context(this->m_audio_stream->codecpar, audio_stream->codec);
-    
+    ret = this->buildMuxAudioStream(audio_stream);
     if (ret < 0) {
-        printf("Failed to copy context from input to output stream codec context\n");
         return false;
     }
-    this->aacCtx->time_base_in = audio_stream->time_base;
-    // 初始化过滤器上下文
-    ret = av_bsf_init(this->aacCtx);
     
-    printf("==========Output Information==========\n");
-        av_dump_format(ofmt_ctx,0, this->muxFilePath,1);
-    printf("======================================\n");
-    
-    // 写文件头
-    ret = avformat_write_header(ofmt_ctx, NULL);
-    if (ret < 0) {
-        this->writeHeaderSeccess = false;
-        printf("文件头写入失败 %s\n",av_err2str(ret));
+    ret = this->writeFileHeader();
+    if (ret < 0 ) {
         return false;
     }
     return true;
@@ -171,7 +123,7 @@ void LRVideoAudioMuxer::freeMuxHander() {
     if (this->hasFilePath) {
         // 写文件尾
         if (this->writeHeaderSeccess) {
-            int ret = av_write_trailer(this->ofmt_ctx);
+            int ret = av_write_trailer(this->format_context);
             if (ret < 0) {
                 printf("文件尾写入失败\n");
             }
@@ -179,7 +131,7 @@ void LRVideoAudioMuxer::freeMuxHander() {
     }
     av_free(this->m_video_stream);
     av_free(this->m_audio_stream);
-    avio_close(this->ofmt_ctx->pb);
+    avio_close(this->format_context->pb);
     av_bsf_free(&this->h264Ctx);
     av_bsf_free(&this->aacCtx);
     this->m_videoListPacket.flush();
@@ -217,7 +169,7 @@ int LRVideoAudioMuxer::initBitStreamFilter() {
 
 void LRVideoAudioMuxer::initGlobalVar() {
     this->ofmt      = NULL;
-    this->ofmt_ctx  = NULL;
+    this->format_context  = NULL;
     this->hasFilePath = strlen(this->muxFilePath) != 0;
     this->writeHeaderSeccess = true;
     this->frame_index  = 0;
@@ -228,12 +180,13 @@ void LRVideoAudioMuxer::initGlobalVar() {
 
 int LRVideoAudioMuxer::configureFFmpegFormat() {
     if (this->hasFilePath) {
-        avformat_alloc_output_context2(&ofmt_ctx, NULL, NULL, this->muxFilePath);
-        if (!ofmt_ctx) {
+        avformat_alloc_output_context2(&format_context, NULL, NULL, this->muxFilePath);
+        if (!format_context) {
             printf("Could not create output context\n");
             return -1;
         }
-        ofmt = ofmt_ctx->oformat;
+        av_dict_set(&format_context->metadata, "description", "mux.mp4", 0);
+        ofmt = format_context->oformat;
         int ret = this->openOutputFile();
         if (ret < 0) {
             return ret;
@@ -246,10 +199,87 @@ int LRVideoAudioMuxer::configureFFmpegFormat() {
 // 打开输出文件
 int LRVideoAudioMuxer::openOutputFile() {
     int ret = 0;
-    ret = avio_open(&ofmt_ctx->pb, this->muxFilePath, AVIO_FLAG_WRITE);
+    ret = avio_open(&format_context->pb, this->muxFilePath, AVIO_FLAG_WRITE);
     if (ret < 0) {
         printf("打开输出文件失败");
         return ret;
+    }
+    return ret;
+}
+
+// 初始化视频
+int LRVideoAudioMuxer::buildMuxVideoStream(AVStream *video_stream) {
+    this->in_v_stream_time = video_stream->time_base;
+    this->in_v_frame_rate  = video_stream->r_frame_rate;
+    
+    int ret = 0;
+    
+    this->m_video_stream   = avformat_new_stream(format_context, video_stream->codec->codec);
+    this->m_video_stream->time_base = video_stream->time_base;
+    
+    if (!this->m_video_stream) {
+        printf("Failed allocating output stream\n");
+        return -1;
+    }
+    
+    // 复制流参数
+    ret = avcodec_parameters_copy(this->h264Ctx->par_in, video_stream->codecpar);
+    ret = avcodec_parameters_from_context(this->m_video_stream->codecpar, video_stream->codec);
+    if (ret < 0) {
+        printf("Failed to copy context from input to output stream codec context\n");
+        return -1;
+    }
+    
+    this->h264Ctx->time_base_in = video_stream->time_base;
+    // 初始化过滤器上下文
+    ret = av_bsf_init(this->h264Ctx);
+    return ret;
+}
+
+// 初始化音频
+int LRVideoAudioMuxer::buildMuxAudioStream(AVStream *audio_stream) {
+    this->in_a_stream_time = audio_stream->time_base;
+    this->in_a_frame_rate  = audio_stream->r_frame_rate;
+    
+    int ret = 0;
+    
+    this->m_audio_stream = avformat_new_stream(format_context, audio_stream->codec->codec);
+    this->m_audio_stream->time_base.num = 1;
+    this->m_audio_stream->time_base.den = audio_stream->codec->sample_rate;
+    
+    if (!this->m_audio_stream) {
+        printf("Failed allocating output stream\n");
+        return -1;
+    }
+    
+    // 复制流参数
+    ret = avcodec_parameters_copy(this->aacCtx->par_in, audio_stream->codecpar);
+    ret = avcodec_parameters_from_context(this->m_audio_stream->codecpar, audio_stream->codec);
+    
+    if (ret < 0) {
+        printf("Failed to copy context from input to output stream codec context\n");
+        return false;
+    }
+    this->aacCtx->time_base_in = audio_stream->time_base;
+    // 初始化过滤器上下文
+    ret = av_bsf_init(this->aacCtx);
+    return ret;
+}
+
+// 写文件头
+int LRVideoAudioMuxer::writeFileHeader() {
+    
+    int ret = 0;
+    
+    printf("==========Output Information==========\n");
+        av_dump_format(format_context,0, this->muxFilePath,1);
+    printf("======================================\n");
+    
+    // 写文件头
+    ret = avformat_write_header(format_context, NULL);
+    if (ret < 0) {
+        this->writeHeaderSeccess = false;
+        printf("文件头写入失败 %s\n",av_err2str(ret));
     }
     return ret;
 }
@@ -335,7 +365,7 @@ void LRVideoAudioMuxer::dispatchAVData() {
 
 void LRVideoAudioMuxer::productAVPacket(AVPacket *mux_packet) {
 
-    int ret = av_write_frame(this->ofmt_ctx, mux_packet);
+    int ret = av_write_frame(this->format_context, mux_packet);
     if (ret < 0) {
         printf("写入文件失败\n");
     }

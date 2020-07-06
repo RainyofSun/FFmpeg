@@ -16,7 +16,7 @@
 class LRVideoAudioMuxer {
 private:
     AVOutputFormat      *ofmt;
-    AVFormatContext     *ofmt_ctx;
+    AVFormatContext     *format_context;
     AVBSFContext        *h264Ctx;
     AVBSFContext        *aacCtx;
     const AVBitStreamFilter   *h264bsfc;
@@ -49,6 +49,9 @@ private:
     void initGlobalVar();
     int configureFFmpegFormat();
     int openOutputFile();
+    int buildMuxVideoStream(AVStream *video_stream);
+    int buildMuxAudioStream(AVStream *audio_stream);
+    int writeFileHeader();
     static void *MuxAVPacket(void *arg);
     void dispatchAVData();
     void productAVPacket(AVPacket *mux_packet);
@@ -57,12 +60,7 @@ public:
     /**
      * 准备混流
      */
-    bool prepareForMux(const char *muxFilePath);
-    
-    /**
-     * 初始化视频/音频BitStreamFilter
-     */
-    bool initializationMuxBitStreamFilter(AVStream *video_stream,AVStream *audio_stream);
+    bool prepareForMux(const char *muxFilePath,AVStream *video_stream,AVStream *audio_stream);
     
     /**
      * 追加视频数据至混流器
