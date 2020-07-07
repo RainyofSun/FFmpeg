@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic,assign) int bitPerChannel;
 /** framesPerPacket */
 @property (nonatomic,assign) int framesPerPacket;
-/** audioBitRate */
+/** audioBitRate 128、192、256、320kbs */
 @property (nonatomic,assign) int audioBitRate;
 
 // savePath

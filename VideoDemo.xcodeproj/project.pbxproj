@@ -43,6 +43,9 @@
 		131B9932248F2933007144E1 /* EncoderViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 131B9930248F2933007144E1 /* EncoderViewController.mm */; };
 		131B9933248F2933007144E1 /* EncoderViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 131B9931248F2933007144E1 /* EncoderViewController.xib */; };
 		131B9936248F2A6E007144E1 /* LRAVVideoCamera.m in Sources */ = {isa = PBXBuildFile; fileRef = 131B9935248F2A6E007144E1 /* LRAVVideoCamera.m */; };
+		131EB20C24B3103F00BA9ABF /* build-fdk-aac.sh in Resources */ = {isa = PBXBuildFile; fileRef = 131EB20B24B3103F00BA9ABF /* build-fdk-aac.sh */; };
+		131EB20E24B3104C00BA9ABF /* build-ffmpeg.sh in Resources */ = {isa = PBXBuildFile; fileRef = 131EB20D24B3104C00BA9ABF /* build-ffmpeg.sh */; };
+		131EB21024B3106000BA9ABF /* build-x264.sh in Resources */ = {isa = PBXBuildFile; fileRef = 131EB20F24B3106000BA9ABF /* build-x264.sh */; };
 		1327C293248E1C1F002E1D71 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1317C9FE2489E95D0074A4F0 /* AudioToolbox.framework */; };
 		1327C295248E1C36002E1D71 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1327C294248E1C36002E1D71 /* AVFoundation.framework */; };
 		1327C296248E1C46002E1D71 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1317C9F82489E9410074A4F0 /* CoreMedia.framework */; };
@@ -153,6 +156,10 @@
 		131B9931248F2933007144E1 /* EncoderViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = EncoderViewController.xib; sourceTree = "<group>"; };
 		131B9934248F2A6E007144E1 /* LRAVVideoCamera.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LRAVVideoCamera.h; sourceTree = "<group>"; };
 		131B9935248F2A6E007144E1 /* LRAVVideoCamera.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LRAVVideoCamera.m; sourceTree = "<group>"; };
+		131EB20B24B3103F00BA9ABF /* build-fdk-aac.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "build-fdk-aac.sh"; sourceTree = "<group>"; };
+		131EB20D24B3104C00BA9ABF /* build-ffmpeg.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "build-ffmpeg.sh"; sourceTree = "<group>"; };
+		131EB20F24B3106000BA9ABF /* build-x264.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "build-x264.sh"; sourceTree = "<group>"; };
+		1323EAA024B451F0005C74CA /* TimeTools.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeTools.h; sourceTree = "<group>"; };
 		1327C294248E1C36002E1D71 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		1327FA28248E38BC002E1D71 /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
 		1327FA29248E38BC002E1D71 /* postprocess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = postprocess.h; sourceTree = "<group>"; };
@@ -469,6 +476,7 @@
 			children = (
 				1318A1DF24A09AD100E4E21A /* log4cplus.h */,
 				131990A72491DC7C00A5125F /* EncoderHeader.h */,
+				1323EAA024B451F0005C74CA /* TimeTools.h */,
 			);
 			path = Header;
 			sourceTree = "<group>";
@@ -584,6 +592,16 @@
 				131819FF2490D8D80069EC4E /* color_conversion */,
 			);
 			path = VideoEncoder;
+			sourceTree = "<group>";
+		};
+		131EB20A24B3101900BA9ABF /* Shell */ = {
+			isa = PBXGroup;
+			children = (
+				131EB20F24B3106000BA9ABF /* build-x264.sh */,
+				131EB20D24B3104C00BA9ABF /* build-ffmpeg.sh */,
+				131EB20B24B3103F00BA9ABF /* build-fdk-aac.sh */,
+			);
+			path = Shell;
 			sourceTree = "<group>";
 		};
 		1327FA25248E38BC002E1D71 /* FFmpeg-iOS */ = {
@@ -825,6 +843,7 @@
 		133586BF2484F3940009B106 /* VideoDemo */ = {
 			isa = PBXGroup;
 			children = (
+				131EB20A24B3101900BA9ABF /* Shell */,
 				131B992D248F28C1007144E1 /* Encoder */,
 				133586E32484F5E10009B106 /* Living */,
 				133586D22484F3960009B106 /* main.m */,
@@ -1010,7 +1029,10 @@
 			files = (
 				133586D02484F3960009B106 /* LaunchScreen.storyboard in Resources */,
 				131B9933248F2933007144E1 /* EncoderViewController.xib in Resources */,
+				131EB20E24B3104C00BA9ABF /* build-ffmpeg.sh in Resources */,
+				131EB20C24B3103F00BA9ABF /* build-fdk-aac.sh in Resources */,
 				133586E92484F6030009B106 /* LivingViewController.xib in Resources */,
+				131EB21024B3106000BA9ABF /* build-x264.sh in Resources */,
 				132FD611249B1822000D91BA /* AudioViewController.xib in Resources */,
 				133586E22484F5460009B106 /* MainViewController.xib in Resources */,
 				133586CD2484F3960009B106 /* Assets.xcassets in Resources */,

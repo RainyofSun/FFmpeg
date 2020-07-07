@@ -281,16 +281,17 @@ void VideoH264HDEncoder::initializationAVFrame(void) {
 // 冲洗编码器
 int VideoH264HDEncoder::flush_encoder() {
     int ret,get_frame;
-    AVPacket enc_pkt;
     if (!(avFormatCtx->streams[0]->codec->codec->capabilities & AV_CODEC_CAP_DELAY)) {
         return 0;
     }
     
     while (1) {
-        enc_pkt.data = NULL;
-        enc_pkt.size = 0;
-        av_init_packet(&enc_pkt);
-        ret = avcodec_encode_audio2(avFormatCtx->streams[0]->codec, &enc_pkt, NULL, &get_frame);
+        AVPacket *enc_pkt = av_packet_alloc();
+        enc_pkt->data = NULL;
+        enc_pkt->size = 0;
+        if (avFormatCtx->streams[0]->codec) {
+            ret = avcodec_encode_video2(avFormatCtx->streams[0]->codec, enc_pkt, NULL, &get_frame);
+        }
         av_frame_free(NULL);
         
         if (ret < 0) {
@@ -301,8 +302,8 @@ int VideoH264HDEncoder::flush_encoder() {
             break;
         }
         
-        printf("Flush Encoder: Succeed to encode 1 frame!\tsize:%5d\n", enc_pkt.size);
-        ret = av_write_frame(avFormatCtx, &enc_pkt);
+        printf("Flush Encoder: Succeed to encode 1 frame!\tsize:%5d\n", enc_pkt->size);
+        ret = av_write_frame(avFormatCtx, enc_pkt);
         if (ret < 0) {
             break;
         }

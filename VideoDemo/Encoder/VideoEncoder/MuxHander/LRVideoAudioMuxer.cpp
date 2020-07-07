@@ -73,7 +73,7 @@ void LRVideoAudioMuxer::addVideoData(AVPacket *video_pkt) {
     memset(&item, 0, sizeof(LRMediaList));
     item.pkt_data = video_pkt;
     item.data_type = LRMuxVideoType;
-    item.timeStamp = video_pkt->pts + video_pkt->duration;
+    item.timeStamp = video_pkt->pts;
     
     bool is_success = this->m_videoListPacket.pushData(item);
     if (!is_success) {
@@ -104,7 +104,7 @@ void LRVideoAudioMuxer::addAudioData(AVPacket *audio_pkt) {
     memset(&item, 0, sizeof(LRMediaList));
     item.pkt_data = audio_pkt;
     item.data_type = LRMuxVideoType;
-    item.timeStamp = audio_pkt->pts + audio_pkt->duration;
+    item.timeStamp = audio_pkt->pts;
     
     bool is_success = this->m_audioListPacket.pushData(item);
     if (!is_success) {
@@ -284,6 +284,18 @@ int LRVideoAudioMuxer::writeFileHeader() {
     return ret;
 }
 
+// 获取视频流时间戳
+double LRVideoAudioMuxer::GetVideoStreamTimeInSecs() {
+
+    return 0.0;
+}
+
+// 获取音频流时间戳
+double LRVideoAudioMuxer::GetAudioStreamTimeInSecs() {
+    
+    return 0.0;
+}
+
 // 开始混流
 void LRVideoAudioMuxer::dispatchAVData() {
     LRMediaList audio_packt;
@@ -314,7 +326,23 @@ void LRVideoAudioMuxer::dispatchAVData() {
         AVPacket *pkt = av_packet_alloc();
         // 比较音视频pts，大于0表示视频帧在前，音频需要连续编码。小于0表示，音频帧在前，应该至少编码一帧视频
         int ret = av_compare_ts(video_packt.timeStamp, this->in_v_stream_time, audio_packt.timeStamp, this->in_a_stream_time);
-        printf("时间戳比较 ret = %d\n",ret);
+        uint64_t v_show_time = video_packt.timeStamp * av_q2d(this->in_v_stream_time) * AV_TIME_BASE;
+        uint64_t a_show_time = audio_packt.timeStamp * av_q2d(this->in_a_stream_time) * AV_TIME_BASE;
+        uint64_t dis;
+        if (ret <= 0) {
+            dis = a_show_time - v_show_time;
+            if (dis > 20000) {  // 丢帧之后有花屏
+                printf("执行丢帧 正差值 = %llu \n",dis);
+//                av_free(video_packt.pkt_data);
+//                av_packet_unref(pkt);
+//                video_packt.timeStamp = 0;
+//                continue;
+            }
+            printf("时间戳比较 ret = %d video 显示时间 = %llu audio 显示时间 = %llu 正差值 = %llu \n",ret,v_show_time,a_show_time,dis);
+        } else {
+            dis = v_show_time - a_show_time;
+            printf("时间戳比较 ret = %d video 显示时间 = %llu audio 显示时间 = %llu 负差值 = %llu \n",ret,v_show_time,a_show_time,dis);
+        }
         if (ret <= 0) {
             printf("video Buff = %p pts = %lld\n",video_packt.pkt_data->buf,video_packt.pkt_data->pts);
             if (av_bsf_send_packet(this->h264Ctx, video_packt.pkt_data) < 0) {

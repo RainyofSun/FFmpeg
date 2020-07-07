@@ -31,6 +31,7 @@ static inline long getCurrentTimeSecSinceReferenceDate()
    gettimeofday(&tv,NULL);
    return tv.tv_sec;
 }
+
 inline int readShortFromFile(short *shortarray, int size, FILE* fp) {
 	int actualSize = fread(shortarray, 2, size, fp);
 	//	LOGI("read data expected size is %d and size is %d", size, actualSize);

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "log4cplus.h"
+#include "TimeTools.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

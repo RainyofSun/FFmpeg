@@ -56,6 +56,11 @@ private:
     void dispatchAVData();
     void productAVPacket(AVPacket *mux_packet);
     
+    // 获取视频流的时间戳
+    double GetVideoStreamTimeInSecs();
+    // 获取音频流的时间戳
+    double GetAudioStreamTimeInSecs();
+    
 public:
     /**
      * 准备混流
