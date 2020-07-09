@@ -1,5 +1,5 @@
 //
-//  LRAVPacketList.hpp
+//  MediaVideoPacketList.hpp
 //  VideoDemo
 //
 //  Created by EGLS_BMAC on 2020/6/19.
@@ -16,22 +16,10 @@
 
 using namespace std;
 
-typedef enum : int {
-    LRMuxVideoType,
-    LRMuxAudioType,
-} LRMuxMediaType;
-
-struct LRMediaList {
-    AVPacket        *pkt_data;
-    u_int64_t       timeStamp;
-    LRMuxMediaType  data_type;
-    bool            extraDataHasChanged;
-};
-
-class LRAVPacketList {
+class MediaVideoPacketList {
 private:
     
-    std::vector<LRMediaList>    m_totalList;
+    std::vector<MediaVideoPacket>    m_totalList;
     pthread_mutex_t             m_lock;
     u_int64_t                   m_nextTimeStamp;
     int     m_count;
@@ -41,8 +29,8 @@ public:
     
     void initPacketList();
     
-    bool pushData(LRMediaList data);
-    void popData(LRMediaList *mediaList);
+    bool pushData(MediaVideoPacket data);
+    void popData(MediaVideoPacket *mediaList);
     
     void reset();
     int count();

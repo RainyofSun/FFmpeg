@@ -10,7 +10,8 @@
 #define LRVideoAudioMuxer_hpp
 
 #include <stdio.h>
-#include "LRAVPacketList.hpp"
+#include "MediaVideoPacketList.hpp"
+#include "MediaAudioPacketList.hpp"
 #include "EncoderHeader.h"
 
 class LRVideoAudioMuxer {
@@ -23,8 +24,8 @@ private:
     const AVBitStreamFilter   *aacbsfc;
     
     /* transfer a/v packet data */
-    LRAVPacketList      m_videoListPacket;
-    LRAVPacketList      m_audioListPacket;
+    MediaVideoPacketList      m_videoListPacket;
+    MediaAudioPacketList      m_audioListPacket;
     
     /* current capture a/v stream */
     AVStream            *m_video_stream;
@@ -40,6 +41,9 @@ private:
     bool hasFilePath;
     bool writeHeaderSeccess;
     int  frame_index;
+    int  video_packet_duration; // 为了计算每一帧的时间长度
+    int  last_video_presentation_time_ms;
+    double last_audio_packet_presentation_time_mills;
     
     pthread_t           m_muxThread;
     pthread_mutex_t     m_muxLock;
@@ -55,7 +59,7 @@ private:
     static void *MuxAVPacket(void *arg);
     void dispatchAVData();
     void productAVPacket(AVPacket *mux_packet);
-    
+
     // 获取视频流的时间戳
     double GetVideoStreamTimeInSecs();
     // 获取音频流的时间戳
@@ -70,12 +74,12 @@ public:
     /**
      * 追加视频数据至混流器
      */
-    void addVideoData(AVPacket *video_pkt);
+    void addVideoData(MediaVideoPacket video_pkt);
     
     /**
      * 追加音频数据至混流器
      */
-    void addAudioData(AVPacket *audio_pkt);
+    void addAudioData(MediaAudioPacket audio_pkt);
     
     /**
      * 释放混流器

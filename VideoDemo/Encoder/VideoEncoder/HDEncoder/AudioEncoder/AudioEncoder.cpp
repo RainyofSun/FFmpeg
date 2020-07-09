@@ -28,7 +28,7 @@ bool AudioEncoder::initAACEncoder(int sample_rate, int channels, int bit_rate, i
     return ret >= 0;
 }
 
-int AudioEncoder::aacEncode(uint8_t *buffer, int size, void *(*AudioEncoderCallBack)(AVPacket *)) {
+int AudioEncoder::aacEncode(uint8_t *buffer, int size, void *(*AudioEncoderCallBack)(MediaAudioPacket)) {
     int bufferCursor = 0;
     int bufferSize = size;
     while (bufferSize >= (buffer_size - samplesCursor)) {
@@ -213,7 +213,7 @@ int AudioEncoder::malloc_audio_pFrame() {
 }
 
 // 编码一帧数据
-int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *)) {
+int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(MediaAudioPacket )) {
     // 设置采样数据格式
     audio_frame->data[0] = this->pcm_samples;
     audio_frame->pts = frame_current * audio_frame->nb_samples;
@@ -234,18 +234,21 @@ int AudioEncoder::audio_encode(void *(*AudioEncoderCallBack)(AVPacket *)) {
         frame_current ++;
         // 编码后的音频流写入文件
         audio_packet->stream_index = audio_stream->index;
-        audio_packet->duration = audio_packet->pts * av_q2d(this->audio_stream->time_base);
-//        frame_current += av_rescale_q(audio_frame->nb_samples, {1,avAudioCtx->sample_rate}, avAudioCtx->time_base);// pts 自增1024 有疑问？
         // 非压缩时候的数据（即YUV或者其它），在ffmpeg中对应的结构体为AVFrame,它的时间基为AVCodecContext 的time_base
         // 压缩后的数据（对应的结构体为AVPacket）对应的时间基为AVStream的time_base
         // 用于将AVPacket中各种时间值从一种时间基转换为另一种时间基
         audio_packet->pts = av_rescale_q(audio_frame->pts, avAudioCtx->time_base, audio_stream->time_base);
-//        av_packet_rescale_ts(audio_packet, avAudioCtx->time_base, audio_stream->time_base);
+        audio_packet->duration = audio_packet->pts * av_q2d(this->audio_stream->time_base);
         audio_packet->dts = audio_packet->pts;
         printf("音频编码到第 %d帧 audio pts = %lld\n",frame_current,audio_packet->pts);
         audio_packet->pos = -1;
+        
+        MediaAudioPacket item = {0};
+        memset(&item, 0, sizeof(MediaAudioPacket));
+        item.pkt_data = audio_packet;
+        item.position = static_cast<float>(audio_packet->pts * av_q2d(this->audio_stream->time_base) * 1000.f);
         // 编码数据返回上层处理
-        AudioEncoderCallBack(audio_packet);
+        AudioEncoderCallBack(item);
         if (this->isNeedWriteLocal) {
             ret = av_write_frame(avFormatCtx, audio_packet);
             if (ret < 0) {

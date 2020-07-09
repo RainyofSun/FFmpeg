@@ -53,14 +53,14 @@ static LRAudioAACHDEncoder *audioEncode = nil;
 }
 
 #pragma mark - private methods
-- (void)audioEncdeo:(AVPacket *)audioPacket {
+- (void)audioEncdeo:(MediaAudioPacket)audioPacket {
     if (self.audioDelegate != nil && [self.audioDelegate respondsToSelector:@selector(audioEncodecData:)]) {
         [self.audioDelegate audioEncodecData:audioPacket];
     }
 }
 
 #pragma mark - C Functions
-void *AudioEncdeorCallBack(AVPacket *audio_packet) {
+void *AudioEncdeorCallBack(MediaAudioPacket audio_packet) {
     [audioEncode audioEncdeo:audio_packet];
     return NULL;
 }

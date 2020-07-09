@@ -7,16 +7,15 @@
 //
 
 #include "VideoH264HDEncoder.hpp"
+#define kModuleName "LRAVVideoEncode"
 
 bool VideoH264HDEncoder::initX264Encoder(int width, int height, int videoBitRate, int frameRate,const char *videoFilePath) {
     
-    frameCounter    = 0;
-    frameWidth      = width;
-    frameHeight     = height;
+    frameWidth          = width;
+    frameHeight         = height;
+    this->frame_rate    = frameRate;
     this->videoFilePath = videoFilePath;
-    this->writeHeaderSeccess = true;
-    this->encode_result = 0;
-    this->isNeedWriteLocal = strlen(videoFilePath) != 0;
+    this->initGlobalVar();
     
     int ret = -1;
     ret = this->initializationFormat();
@@ -35,38 +34,57 @@ bool VideoH264HDEncoder::initX264Encoder(int width, int height, int videoBitRate
 }
 
 // 开始编码
-void VideoH264HDEncoder::encode(I420Buffer buffer, void *(*VideoEncodeCallBack)(AVPacket *)) {
+void VideoH264HDEncoder::encode(I420Buffer buffer,uint64_t video_time_mills, void *(*VideoEncodeCallBack)(MediaVideoPacket)) {
     // YUV data
     pFrame->data[0] = buffer.y_frame;   // Y
     pFrame->data[1] = buffer.u_frame;   // U
     pFrame->data[2] = buffer.v_frame;   // V
+    
+    if (encode_time == 0) {
+        encode_time = getCurrentTime();
+    }
+    
+    int expectedFrameCount = static_cast<int>(encode_time / 1000.0F * this->frame_rate + 0.5F);
+    if (expectedFrameCount < this->encode_frame_count) {
+        log4cplus_debug(kModuleName, "drop frame encode_count: %d frame_count: %d,time = %lld ", encode_frame_count, expectedFrameCount,encode_time);
+        return;
+    }
+    
+    if (this->start_time == 0) {
+        this->start_time = getCurrentTime();
+    }
+    
     // PTS/时间戳
-    pFrame->pts = frameCounter;
+    pFrame->pts = encode_frame_count;
     
     // 发送一帧视频像素数据
     avcodec_send_frame(pCodecCtx, pFrame);
     // 接收一帧视频像素数据--编码--视频压缩数据格式
-    AVPacket *packet = (AVPacket *)av_malloc(sizeof(AVPacket));
-    memset(packet, 0, sizeof(AVPacket));
+    AVPacket *video_packet = (AVPacket *)av_malloc(sizeof(AVPacket));
+    memset(video_packet, 0, sizeof(AVPacket));
     // 接收一帧视频像素数据--编码--视频压缩数据格式
-    this->encode_result = avcodec_receive_packet(pCodecCtx, packet);
+    this->encode_result = avcodec_receive_packet(pCodecCtx, video_packet);
     if (this->encode_result == 0) {
-        // 编码成功
         // 时间戳
-        frameCounter ++;
+        encode_frame_count ++;
         // 将视频压缩数据写入输出文件中
-        packet->stream_index = video_stream->index;
-        packet->duration = packet->pts * av_q2d(this->video_stream->time_base);
+        video_packet->stream_index = video_stream->index;
+        video_packet->duration = video_packet->pts * av_q2d(this->video_stream->time_base);
         // 非压缩时候的数据（即YUV或者其它），在ffmpeg中对应的结构体为AVFrame,它的时间基为AVCodecContext 的time_base
         // 压缩后的数据（对应的结构体为AVPacket）对应的时间基为AVStream的time_base
         // 用于将AVPacket中各种时间值从一种时间基转换为另一种时间基
-        av_packet_rescale_ts(packet, pCodecCtx->time_base, video_stream->time_base);
-        packet->pos = -1;
-        printf("视频编码到第 %d帧  video pts = %lld\n",frameCounter,packet->pts);
+        av_packet_rescale_ts(video_packet, pCodecCtx->time_base, video_stream->time_base);
+        video_packet->pos = -1;
+        printf("视频编码到第 %d帧  video pts = %lld\n",encode_frame_count,video_packet->pts);
+        MediaVideoPacket item = {0};
+        memset(&item, 0, sizeof(MediaVideoPacket));
+        item.pkt_data = video_packet;
+//        item.timeMills = video_time_mills/1000.f;
+        item.timeMills = static_cast<float>(video_packet->pts * av_q2d(this->video_stream->time_base) * 1000.f);
         // 编码数据返回上层处理
-        VideoEncodeCallBack(packet);
+        VideoEncodeCallBack(item);
         if (this->isNeedWriteLocal) {
-            this->encode_result = av_write_frame(avFormatCtx, packet);
+            this->encode_result = av_write_frame(avFormatCtx, video_packet);
 //            printf("Successed to encode frame: %5d\tsize:%5d\n",frameCounter,packet->size);
             if (this->encode_result < 0) {
                 printf("输出一帧数据失败\n");
@@ -102,6 +120,16 @@ void VideoH264HDEncoder::freeEncoder() {
 }
 
 #pragma mark - private methods
+// 初始化参数集
+void VideoH264HDEncoder::initGlobalVar() {
+    this->writeHeaderSeccess = true;
+    this->encode_result = 0;
+    this->isNeedWriteLocal = strlen(videoFilePath) != 0;
+    this->encode_time = 0;
+    this->start_time = 0;
+    this->encode_frame_count = 0;
+}
+
 // 初始化封装格式
 int VideoH264HDEncoder::initializationFormat() {
     avcodec_register_all();

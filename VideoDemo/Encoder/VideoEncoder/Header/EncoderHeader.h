@@ -44,13 +44,6 @@ extern "C" {
 
 #endif
 
-typedef struct VideoFrame_t {
-    unsigned char *buffer;  // YUV420P的图像数据
-    int size;               // 图像数据的大小
-    int timeMills;          // 所代表的时间戳
-    int duration;           // 这一帧图像所代表的时间长度
-} VideoFrame;
-
 typedef struct {
     uint8_t *y_frame;
     uint8_t *u_frame;
@@ -63,6 +56,20 @@ typedef struct {
     int stride_u;
     int stride_v;
 } I420Buffer;
+
+typedef struct {
+    AVPacket    *pkt_data;
+    float       position;
+    long        frameNum;
+} MediaAudioPacket;
+
+typedef struct {
+    AVPacket    *pkt_data;
+    int64_t     pts;
+    int64_t     dts;
+    int         timeMills;
+    int         duration;
+} MediaVideoPacket;
 
 const int delta = 30;   // 码率控制因子
 

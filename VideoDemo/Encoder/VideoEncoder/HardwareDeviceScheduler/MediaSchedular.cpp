@@ -64,7 +64,8 @@ int MediaSchedular::prepareEncoder(CaptureParameters parameters) {
 // 编码视频
 int MediaSchedular::videoEncode(uint8_t *y_frame, uint8_t *uv_frame, int src_stride_y, int src_stride_uv, int width, int height) {
     I420Buffer buffer = this->pixel_convert.convertNV12BufferToI420Buffer(y_frame, uv_frame, src_stride_y, src_stride_uv, (int)width, (int)height);
-    this->video_encoder.encode(buffer, this->VideoEncodeCallBack);
+    // TODO:: 时间有问题
+    this->video_encoder.encode(buffer,getCurrentTime(), this->VideoEncodeCallBack);
     this->pixel_convert.freeI420Buffer(buffer);
     return 0;
 }
@@ -108,13 +109,13 @@ void MediaSchedular::initGlobalVar() {
 
 #pragma mark - C Functions
 // 视频编码回调
-void* MediaSchedular::VideoEncodeCallBack(AVPacket *video_packet) {
+void* MediaSchedular::VideoEncodeCallBack(MediaVideoPacket video_packet) {
     
     return NULL;
 }
 
 // 音频编码回调
-void* MediaSchedular::AudioEncodeCallBack(AVPacket *audio_packet) {
+void* MediaSchedular::AudioEncodeCallBack(MediaAudioPacket audio_packet) {
     
     return NULL;
 }

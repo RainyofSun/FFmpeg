@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol VideoEncoderDelegate <NSObject>
 
-- (void)videoEncodecData:(AVPacket *)videoPacket;
+- (void)videoEncodecData:(MediaVideoPacket)videoPacket;
 
 @end
 

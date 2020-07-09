@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol AudioEncoderDelegate <NSObject>
 
-- (void)audioEncodecData:(AVPacket *)audioPacket;
+- (void)audioEncodecData:(MediaAudioPacket)audioPacket;
 
 @end
 

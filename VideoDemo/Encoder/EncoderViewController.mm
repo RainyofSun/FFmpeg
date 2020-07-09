@@ -40,7 +40,7 @@
     config.videoWidth = 720;
     config.videoHeight = 1280;
     config.videoBitRate = 1536*1000;
-    config.frameRate = 30;
+    config.frameRate = 25;
     config.videoFilePath = @"video.h264";
     // 音频参数
     config.sampleRate = 44100;

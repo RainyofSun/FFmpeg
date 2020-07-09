@@ -12,12 +12,10 @@
 #import "LRVideoH264HDEncoder.h"
 #import "LRAudioAACHDEncoder.h"
 #include "LRVideoAudioMuxer.hpp"
-#include "LRVideoAudioMuxHander.hpp"
 
 @interface HardwareDeviceScheduler ()<VideoCameraCaptureDelegate,AudioCaptureDelegate,VideoEncoderDelegate,AudioEncoderDelegate>
 {
     LRVideoAudioMuxer       mediaMuxHander;
-//    LRVideoAudioMuxHander   mediaMuxHander;
 }
 /** videoCapture */
 @property (nonatomic,strong) LRAVVideoCamera *videoCapture;
@@ -112,7 +110,7 @@
 }
 
 #pragma mark - VideoEncoderDelegate
-- (void)videoEncodecData:(AVPacket *)videoPacket {
+- (void)videoEncodecData:(MediaVideoPacket)videoPacket {
     if (!self.isSuccess) {
         return;
     }
@@ -120,7 +118,7 @@
 }
 
 #pragma mark - AudioEncoderDelegate
- - (void)audioEncodecData:(AVPacket *)audioPacket {
+ - (void)audioEncodecData:(MediaAudioPacket)audioPacket {
     if (!self.isSuccess) {
         return;
     }

@@ -14,7 +14,9 @@
 static LRVideoH264HDEncoder *encoder = nil;
 
 @interface LRVideoH264HDEncoder ()
-
+{
+    int64_t  encodingTimeMills;
+}
 @property (nonatomic)VideoH264HDEncoder videoEncoder;
 @property (nonatomic)NV12ToYUV420P vonvert;
 @property (nonatomic,assign)bool isSucess;
@@ -25,6 +27,7 @@ static LRVideoH264HDEncoder *encoder = nil;
 
 - (instancetype)initWithVideoEncoderConfig:(LRImageCameraConfig *)config videoDelegate:(nonnull id<VideoEncoderDelegate>)videoDelegate {
     if (self = [super init]) {
+        encodingTimeMills = -1;
         self.videoDelegate = videoDelegate;
         encoder = self;
         _isSucess = _videoEncoder.initX264Encoder(config.videoWidth, config.videoHeight, config.videoBitRate, config.frameRate,[config.videoFilePath cStringUsingEncoding:NSUTF8StringEncoding]);
@@ -53,8 +56,20 @@ static LRVideoH264HDEncoder *encoder = nil;
     uint8_t *uv_frame = (uint8_t *)CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 1);
     int src_stride_y = (int)CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0);
     int src_stride_uv = (int)CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 1);
+    
+    int64_t encodingTime = CFAbsoluteTimeGetCurrent();;
+    if (-1 == encodingTimeMills) {
+        encodingTimeMills = encodingTime;
+    }
+    
+    int64_t encodingDuraction = encodingTime - encodingTimeMills;
+    
+//    double time = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer));
+//    int64_t currentPts = (int64_t)(time * 1000);
+//    NSLog(@"视频采集时间戳 %lld doubleTime = %f",currentPts,time);
+    NSLog(@"视频采集时间 %lld",encodingTime);
     I420Buffer buffer = _vonvert.convertNV12BufferToI420Buffer(y_frame, uv_frame, src_stride_y, src_stride_uv, (int)pixelWidth, (int)pixelHeight);
-    _videoEncoder.encode(buffer,VideoEncdeorCallBack);
+    _videoEncoder.encode(buffer,encodingTime,VideoEncdeorCallBack);
     CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
     CFRelease(pixelBuffer);
     _vonvert.freeI420Buffer(buffer);
@@ -88,14 +103,14 @@ static LRVideoH264HDEncoder *encoder = nil;
 }
 
 #pragma mark - private methods
-- (void)videoCodec:(AVPacket *)videoPacket {
+- (void)videoCodec:(MediaVideoPacket)videoPacket {
     if (self.videoDelegate != nil && [self.videoDelegate respondsToSelector:@selector(videoEncodecData:)]) {
         [self.videoDelegate videoEncodecData:videoPacket];
     }
 }
 
 #pragma mark - C Functtions
-void * VideoEncdeorCallBack(AVPacket *video_packet) {
+void * VideoEncdeorCallBack(MediaVideoPacket video_packet) {
     [encoder videoCodec:video_packet];
     return NULL;
 }

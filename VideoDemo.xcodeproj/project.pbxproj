@@ -14,8 +14,7 @@
 		13170E93249C75F000FA9D75 /* NV12ToYUV420P.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13170E8D249C75F000FA9D75 /* NV12ToYUV420P.cpp */; };
 		13170E94249C75F000FA9D75 /* LRVideoH264HDEncoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13170E90249C75F000FA9D75 /* LRVideoH264HDEncoder.mm */; };
 		13170E95249C75F000FA9D75 /* VideoH264HDEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13170E92249C75F000FA9D75 /* VideoH264HDEncoder.cpp */; };
-		13170EA1249CB8F800FA9D75 /* LRVideoAudioMuxHander.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13170E9F249CB8F800FA9D75 /* LRVideoAudioMuxHander.cpp */; };
-		13170EA4249CBA9B00FA9D75 /* LRAVPacketList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13170EA2249CBA9B00FA9D75 /* LRAVPacketList.cpp */; };
+		13170EA4249CBA9B00FA9D75 /* MediaVideoPacketList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13170EA2249CBA9B00FA9D75 /* MediaVideoPacketList.cpp */; };
 		1317C9F42489E9110074A4F0 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 1317C9F32489E9010074A4F0 /* libiconv.tbd */; };
 		1317C9F52489E91C0074A4F0 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 133587CC248501D80009B106 /* libz.tbd */; };
 		1317C9F72489E9370074A4F0 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 1317C9F62489E92E0074A4F0 /* libbz2.tbd */; };
@@ -46,6 +45,7 @@
 		131EB20C24B3103F00BA9ABF /* build-fdk-aac.sh in Resources */ = {isa = PBXBuildFile; fileRef = 131EB20B24B3103F00BA9ABF /* build-fdk-aac.sh */; };
 		131EB20E24B3104C00BA9ABF /* build-ffmpeg.sh in Resources */ = {isa = PBXBuildFile; fileRef = 131EB20D24B3104C00BA9ABF /* build-ffmpeg.sh */; };
 		131EB21024B3106000BA9ABF /* build-x264.sh in Resources */ = {isa = PBXBuildFile; fileRef = 131EB20F24B3106000BA9ABF /* build-x264.sh */; };
+		1323EAA324B5CAC5005C74CA /* MediaAudioPacketList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1323EAA124B5CAC5005C74CA /* MediaAudioPacketList.cpp */; };
 		1327C293248E1C1F002E1D71 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1317C9FE2489E95D0074A4F0 /* AudioToolbox.framework */; };
 		1327C295248E1C36002E1D71 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1327C294248E1C36002E1D71 /* AVFoundation.framework */; };
 		1327C296248E1C46002E1D71 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1317C9F82489E9410074A4F0 /* CoreMedia.framework */; };
@@ -84,10 +84,8 @@
 		13170E90249C75F000FA9D75 /* LRVideoH264HDEncoder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LRVideoH264HDEncoder.mm; sourceTree = "<group>"; };
 		13170E91249C75F000FA9D75 /* NV12ToYUV420P.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = NV12ToYUV420P.hpp; sourceTree = "<group>"; };
 		13170E92249C75F000FA9D75 /* VideoH264HDEncoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VideoH264HDEncoder.cpp; sourceTree = "<group>"; };
-		13170E9F249CB8F800FA9D75 /* LRVideoAudioMuxHander.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = LRVideoAudioMuxHander.cpp; sourceTree = "<group>"; };
-		13170EA0249CB8F800FA9D75 /* LRVideoAudioMuxHander.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = LRVideoAudioMuxHander.hpp; sourceTree = "<group>"; };
-		13170EA2249CBA9B00FA9D75 /* LRAVPacketList.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = LRAVPacketList.cpp; sourceTree = "<group>"; };
-		13170EA3249CBA9B00FA9D75 /* LRAVPacketList.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = LRAVPacketList.hpp; sourceTree = "<group>"; };
+		13170EA2249CBA9B00FA9D75 /* MediaVideoPacketList.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MediaVideoPacketList.cpp; sourceTree = "<group>"; };
+		13170EA3249CBA9B00FA9D75 /* MediaVideoPacketList.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MediaVideoPacketList.hpp; sourceTree = "<group>"; };
 		1317C9F32489E9010074A4F0 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 		1317C9F62489E92E0074A4F0 /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
 		1317C9F82489E9410074A4F0 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
@@ -160,6 +158,8 @@
 		131EB20D24B3104C00BA9ABF /* build-ffmpeg.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "build-ffmpeg.sh"; sourceTree = "<group>"; };
 		131EB20F24B3106000BA9ABF /* build-x264.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "build-x264.sh"; sourceTree = "<group>"; };
 		1323EAA024B451F0005C74CA /* TimeTools.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeTools.h; sourceTree = "<group>"; };
+		1323EAA124B5CAC5005C74CA /* MediaAudioPacketList.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MediaAudioPacketList.cpp; sourceTree = "<group>"; };
+		1323EAA224B5CAC5005C74CA /* MediaAudioPacketList.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MediaAudioPacketList.hpp; sourceTree = "<group>"; };
 		1327C294248E1C36002E1D71 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		1327FA28248E38BC002E1D71 /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
 		1327FA29248E38BC002E1D71 /* postprocess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = postprocess.h; sourceTree = "<group>"; };
@@ -390,10 +390,10 @@
 			children = (
 				131AA4F624A33AEB00A94C72 /* Mp4Synthesis.cpp */,
 				131AA4F724A33AEB00A94C72 /* Mp4Synthesis.h */,
-				13170E9F249CB8F800FA9D75 /* LRVideoAudioMuxHander.cpp */,
-				13170EA0249CB8F800FA9D75 /* LRVideoAudioMuxHander.hpp */,
-				13170EA2249CBA9B00FA9D75 /* LRAVPacketList.cpp */,
-				13170EA3249CBA9B00FA9D75 /* LRAVPacketList.hpp */,
+				13170EA2249CBA9B00FA9D75 /* MediaVideoPacketList.cpp */,
+				13170EA3249CBA9B00FA9D75 /* MediaVideoPacketList.hpp */,
+				1323EAA124B5CAC5005C74CA /* MediaAudioPacketList.cpp */,
+				1323EAA224B5CAC5005C74CA /* MediaAudioPacketList.hpp */,
 				1318A1E024A0AB3700E4E21A /* LRVideoAudioMuxer.cpp */,
 				1318A1E124A0AB3700E4E21A /* LRVideoAudioMuxer.hpp */,
 			);
@@ -1049,8 +1049,7 @@
 				1317CA042489FFE50074A4F0 /* LRFFmpegTool.m in Sources */,
 				131B9936248F2A6E007144E1 /* LRAVVideoCamera.m in Sources */,
 				131896C82498B93A003FF68F /* CommonUtil.m in Sources */,
-				13170EA1249CB8F800FA9D75 /* LRVideoAudioMuxHander.cpp in Sources */,
-				13170EA4249CBA9B00FA9D75 /* LRAVPacketList.cpp in Sources */,
+				13170EA4249CBA9B00FA9D75 /* MediaVideoPacketList.cpp in Sources */,
 				13170E93249C75F000FA9D75 /* NV12ToYUV420P.cpp in Sources */,
 				133586C22484F3940009B106 /* AppDelegate.m in Sources */,
 				133E4C62248799C200E566CF /* LRImageVideoScheduler.m in Sources */,
@@ -1076,6 +1075,7 @@
 				133E4C5E24878E0500E566CF /* LRImageCameraConfig.m in Sources */,
 				1318E00C2488E71200412985 /* LRImageCameraRender.m in Sources */,
 				13170E8B249C75E900FA9D75 /* AudioAACEncoder.cpp in Sources */,
+				1323EAA324B5CAC5005C74CA /* MediaAudioPacketList.cpp in Sources */,
 				133E4C652487A03800E566CF /* LRImageContext.m in Sources */,
 				131B9932248F2933007144E1 /* EncoderViewController.mm in Sources */,
 				1318A1E224A0AB3700E4E21A /* LRVideoAudioMuxer.cpp in Sources */,

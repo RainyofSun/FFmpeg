@@ -1,28 +1,28 @@
 //
-//  LRAVPacketList.cpp
+//  MediaVideoPacketList.cpp
 //  VideoDemo
 //
 //  Created by EGLS_BMAC on 2020/6/19.
 //  Copyright © 2020 EGLS_BMAC. All rights reserved.
 //
 
-#include "LRAVPacketList.hpp"
+#include "MediaVideoPacketList.hpp"
 
 #define MAX_MEDIALIST_LENGTH    100 * 1024 * 1024
 
-void LRAVPacketList::initPacketList() {
+void MediaVideoPacketList::initPacketList() {
     pthread_mutex_init(&m_lock, NULL);
     this->reset();
 }
 
-bool LRAVPacketList::pushData(LRMediaList data) {
+bool MediaVideoPacketList::pushData(MediaVideoPacket data) {
     bool ret = false;
     
     pthread_mutex_lock(&m_lock);
     
     if (m_count < MAX_MEDIALIST_LENGTH) {
         if (m_count == 0) {
-            m_nextTimeStamp = data.timeStamp;
+            m_nextTimeStamp = data.timeMills;
         }
         //在m_totalList的最后一个向量后插入一个元素
         m_totalList.push_back(data);
@@ -39,20 +39,19 @@ bool LRAVPacketList::pushData(LRMediaList data) {
     return ret;
 }
 
-void LRAVPacketList::popData(LRMediaList *mediaList) {
+void MediaVideoPacketList::popData(MediaVideoPacket *mediaList) {
     pthread_mutex_lock(&m_lock);
     if (m_count <= 0) {
         pthread_mutex_unlock(&m_lock);
         return;
     }
     
-    std::vector<LRMediaList>:: iterator iterator;
+    std::vector<MediaVideoPacket>:: iterator iterator;
     // 将m_totalList内部第一个元素取出赋值 iterator
     iterator = m_totalList.begin();
     
-    mediaList->timeStamp = (*iterator).timeStamp;
+    mediaList->timeMills = (*iterator).timeMills;
     mediaList->pkt_data  = (*iterator).pkt_data;
-    mediaList->data_type = (*iterator).data_type;
     
     // 删除第一个元素
     m_totalList.erase(iterator);
@@ -62,13 +61,13 @@ void LRAVPacketList::popData(LRMediaList *mediaList) {
         m_nextTimeStamp = 0;
     } else {
         iterator = m_totalList.begin();
-        m_nextTimeStamp = iterator->timeStamp;
+        m_nextTimeStamp = iterator->timeMills;
     }
     
     pthread_mutex_unlock(&m_lock);
 }
 
-void LRAVPacketList::reset() {
+void MediaVideoPacketList::reset() {
     pthread_mutex_lock(&m_lock);
     
     m_count = 0;
@@ -78,7 +77,7 @@ void LRAVPacketList::reset() {
     pthread_mutex_unlock(&m_lock);
 }
 
-int LRAVPacketList::count() {
+int MediaVideoPacketList::count() {
     int count = 0;
     pthread_mutex_lock(&m_lock);
     count = m_count;
@@ -86,11 +85,11 @@ int LRAVPacketList::count() {
     return count;
 }
 
-void LRAVPacketList::flush() {
+void MediaVideoPacketList::flush() {
     // 清空所有元素
     m_totalList.clear();
 }
 
-void LRAVPacketList::freePthread() {
+void MediaVideoPacketList::freePthread() {
     pthread_mutex_destroy(&m_lock);
 }

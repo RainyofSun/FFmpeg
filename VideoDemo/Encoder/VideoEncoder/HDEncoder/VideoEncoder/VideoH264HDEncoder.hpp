@@ -21,14 +21,18 @@ private:
     AVFormatContext *avFormatCtx;
     
     int             pictureSize;
-    int             frameCounter;
+    int             encode_frame_count;
     int             frameWidth; // 编码的图像宽度
     int             frameHeight; // 编码的图像高度
     const char*     videoFilePath;
     bool            writeHeaderSeccess;
     bool            isNeedWriteLocal;
     int             encode_result;
+    int             frame_rate;
+    int64_t         encode_time;
+    int64_t         start_time;
     
+    void initGlobalVar();
     void initializationAVFrame(void);
     int  initializationCodexCtx(int width, int height,int frameRate,int videoBitRate);
     int  initializationFormat();
@@ -51,7 +55,7 @@ public:
     /**
      * 开始编码
      */
-    void encode(I420Buffer buffer,void *(*VideoEncodeCallBack)(AVPacket *video_packet));
+    void encode(I420Buffer buffer,uint64_t video_time_mills,void *(*VideoEncodeCallBack)(MediaVideoPacket video_packet));
     
     /**
      * 销毁编码器
