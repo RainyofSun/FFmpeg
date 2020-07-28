@@ -14,6 +14,7 @@
 
 /** captureSchedular */
 @property (nonatomic,strong) HardwareDeviceScheduler *captureSchedular;
+@property (weak, nonatomic) IBOutlet UIButton *recordBtn;
 
 @end
 
@@ -27,9 +28,15 @@
 //    [self muxTest];
 }
 
-- (void)viewDidDisappear:(BOOL)animated {
-    [super viewDidDisappear:animated];
-    [self.captureSchedular stopCapture];
+- (IBAction)touchRecordBtn:(UIButton *)sender {
+    if (sender.selected) {
+        [self.captureSchedular stopCapture];
+        [self.navigationController popViewControllerAnimated:YES];
+    } else {
+        [self.captureSchedular startCapture];
+    }
+    
+    sender.selected = !sender.selected;
 }
 
 - (void)nativeMethods {
@@ -58,7 +65,7 @@
         previewLayer.frame = self.view.frame;
     });
     [self.view.layer addSublayer:previewLayer];
-    [self.captureSchedular startCapture];
+    [self.view bringSubviewToFront:self.recordBtn];
 }
 
 - (void)muxTest {
