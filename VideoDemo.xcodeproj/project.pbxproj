@@ -67,6 +67,7 @@
 		133E4C652487A03800E566CF /* LRImageContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 133E4C642487A03800E566CF /* LRImageContext.m */; };
 		133E4C682487A0A500E566CF /* LRImageTextureFrame.m in Sources */ = {isa = PBXBuildFile; fileRef = 133E4C672487A0A500E566CF /* LRImageTextureFrame.m */; };
 		133E4C6B2487A57A00E566CF /* LRImageProgram.m in Sources */ = {isa = PBXBuildFile; fileRef = 133E4C6A2487A57A00E566CF /* LRImageProgram.m */; };
+		1345C9FD24D0039F00FDD6E8 /* LRRTMPPushFlow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1345C9FB24D0039F00FDD6E8 /* LRRTMPPushFlow.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -318,6 +319,8 @@
 		133E4C672487A0A500E566CF /* LRImageTextureFrame.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LRImageTextureFrame.m; sourceTree = "<group>"; };
 		133E4C692487A57A00E566CF /* LRImageProgram.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LRImageProgram.h; sourceTree = "<group>"; };
 		133E4C6A2487A57A00E566CF /* LRImageProgram.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LRImageProgram.m; sourceTree = "<group>"; };
+		1345C9FB24D0039F00FDD6E8 /* LRRTMPPushFlow.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = LRRTMPPushFlow.cpp; sourceTree = "<group>"; };
+		1345C9FC24D0039F00FDD6E8 /* LRRTMPPushFlow.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = LRRTMPPushFlow.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -584,6 +587,7 @@
 		131B9939248F2F83007144E1 /* VideoEncoder */ = {
 			isa = PBXGroup;
 			children = (
+				1345C9FA24D0036300FDD6E8 /* RTMPPushFlow */,
 				13170E9E249CB89900FA9D75 /* MuxHander */,
 				13170E7E249C6ED500FA9D75 /* HardwareDeviceScheduler */,
 				131990A62491DC6900A5125F /* Header */,
@@ -970,6 +974,15 @@
 			path = ImageVideoScheduler;
 			sourceTree = "<group>";
 		};
+		1345C9FA24D0036300FDD6E8 /* RTMPPushFlow */ = {
+			isa = PBXGroup;
+			children = (
+				1345C9FB24D0039F00FDD6E8 /* LRRTMPPushFlow.cpp */,
+				1345C9FC24D0039F00FDD6E8 /* LRRTMPPushFlow.hpp */,
+			);
+			path = RTMPPushFlow;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1049,6 +1062,7 @@
 				1317CA042489FFE50074A4F0 /* LRFFmpegTool.m in Sources */,
 				131B9936248F2A6E007144E1 /* LRAVVideoCamera.m in Sources */,
 				131896C82498B93A003FF68F /* CommonUtil.m in Sources */,
+				1345C9FD24D0039F00FDD6E8 /* LRRTMPPushFlow.cpp in Sources */,
 				13170EA1249CB8F800FA9D75 /* LRVideoAudioMuxHander.cpp in Sources */,
 				13170EA4249CBA9B00FA9D75 /* LRAVPacketList.cpp in Sources */,
 				13170E93249C75F000FA9D75 /* NV12ToYUV420P.cpp in Sources */,

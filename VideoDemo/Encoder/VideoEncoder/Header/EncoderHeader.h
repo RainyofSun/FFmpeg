@@ -26,6 +26,7 @@ extern "C" {
 #include "libavutil/common.h"
 #include "libavutil/channel_layout.h"
 #include "libavutil/imgutils.h"
+#include "libavutil/time.h"
 #include "libyuv.h"
 #ifdef __cplusplus
 };
